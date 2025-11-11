@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Medal Rotation POC</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .subtitle {
+            text-align: center;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+        
+        .medals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .medal-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .medal-title {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .value-display {
+            min-width: 60px;
+            text-align: right;
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        button {
+            background: white;
+            color: #1e3c72;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏅 3D Medal Rotation Proof of Concept</h1>
+        <p class="subtitle">Interactive demo with irregular edge handling</p>
+        
+        <div class="medals-grid">
+            <div class="medal-container">
+                <div class="medal-title">Medal 1 - Garden Theme</div>
+                <div class="canvas-wrapper">
+                    <canvas id="medal1"></canvas>
+                </div>
+            </div>
+            
+            <div class="medal-container">
+                <div class="medal-title">Medal 2 - Eagle Theme</div>
+                <div class="canvas-wrapper">
+                    <canvas id="medal2"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Rotation Angle</label>
+                <div class="control-row">
+                    <input type="range" id="rotation" min="-180" max="180" value="0" step="1">
+                    <span class="value-display"><span id="rotationValue">0</span>°</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Edge Thickness</label>
+                <div class="control-row">
+                    <input type="range" id="thickness" min="1" max="50" value="25" step="1">
+                    <span class="value-display"><span id="thicknessValue">25</span>px</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Edge Darkness</label>
+                <div class="control-row">
+                    <input type="range" id="darkness" min="0" max="100" value="40" step="1">
+                    <span class="value-display"><span id="darknessValue">40</span>%</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Animation Speed</label>
+                <div class="control-row">
+                    <input type="range" id="speed" min="0.5" max="5" value="2" step="0.1">
+                    <span class="value-display"><span id="speedValue">2.0</span>x</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showEdge" checked>
+                    <span>Show Edge/Extrusion</span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="showOutline">
+                    <span>Show Debug Outline</span>
+                </label>
+            </div>
+            
+            <div class="control-group">
+                <div class="button-group">
+                    <button id="animate">▶ Animate Rotation</button>
+                    <button id="stop">⏸ Stop</button>
+                    <button id="reset">↺ Reset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        class Medal3D {
+            constructor(canvasId, imagePath, backImagePath = null) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+                this.imagePath = imagePath;
+                this.backImagePath = backImagePath;
+                this.image = null;
+                this.backImage = null;
+                this.rotation = 0;
+                this.thickness = 25;
+                this.darkness = 0.4;
+                this.showEdge = true;
+                this.showOutline = false;
+                this.animating = false;
+                this.animationSpeed = 2;
+                
+                // Will store the extracted edge points
+                this.edgePoints = [];
+                
+                this.init();
+            }
+            
+            async init() {
+                await this.loadImages();
+                this.extractEdgePoints();
+                this.render();
+            }
+            
+            async loadImages() {
+                // Load front image
+                await new Promise((resolve) => {
+                    this.image = new Image();
+                    this.image.crossOrigin = 'anonymous';
+                    this.image.onload = () => {
+                        const size = Math.max(this.image.width, this.image.height);
+                        this.canvas.width = size;
+                        this.canvas.height = size;
+                        resolve();
+                    };
+                    this.image.src = this.imagePath;
+                });
+                
+                // Load back image if provided
+                if (this.backImagePath) {
+                    await new Promise((resolve) => {
+                        this.backImage = new Image();
+                        this.backImage.crossOrigin = 'anonymous';
+                        this.backImage.onload = resolve;
+                        this.backImage.onerror = () => {
+                            console.warn('Back image failed to load, using front image');
+                            this.backImage = null;
+                            resolve();
+                        };
+                        this.backImage.src = this.backImagePath;
+                    });
+                }
+            }
+            
+            extractEdgePoints() {
+                // Create a temporary canvas to analyze the image
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = this.image.width;
+                tempCanvas.height = this.image.height;
+                const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+                
+                tempCtx.drawImage(this.image, 0, 0);
+                
+                let imageData, data;
+                try {
+                    imageData = tempCtx.getImageData(0, 0, this.image.width, this.image.height);
+                    data = imageData.data;
+                } catch (e) {
+                    console.error('Failed to extract edge points:', e);
+                    // Fall back to circular approximation
+                    this.createCircularEdgePoints();
+                    return;
+                }
+                
+                // Find edge points by scanning for alpha channel changes
+                this.edgePoints = [];
+                const centerX = this.image.width / 2;
+                const centerY = this.image.height / 2;
+                
+                // Scan in polar coordinates to get edge points
+                const angleSteps = 360;
+                for (let i = 0; i < angleSteps; i++) {
+                    const angle = (i / angleSteps) * Math.PI * 2;
+                    const dx = Math.cos(angle);
+                    const dy = Math.sin(angle);
+                    
+                    // Cast ray from center outward
+                    let maxRadius = 0;
+                    for (let r = 0; r < Math.max(this.image.width, this.image.height) / 2; r++) {
+                        const x = Math.floor(centerX + dx * r);
+                        const y = Math.floor(centerY + dy * r);
+                        
+                        if (x >= 0 && x < this.image.width && y >= 0 && y < this.image.height) {
+                            const idx = (y * this.image.width + x) * 4;
+                            const alpha = data[idx + 3];
+                            
+                            if (alpha > 128) {
+                                maxRadius = r;
+                            }
+                        }
+                    }
+                    
+                    this.edgePoints.push({
+                        angle: angle,
+                        radius: maxRadius,
+                        x: centerX + dx * maxRadius,
+                        y: centerY + dy * maxRadius
+                    });
+                }
+                
+                console.log(`Extracted ${this.edgePoints.length} edge points for ${this.imagePath}`);
+            }
+            
+            createCircularEdgePoints() {
+                // Fallback: create circular edge points
+                this.edgePoints = [];
+                const centerX = this.image.width / 2;
+                const centerY = this.image.height / 2;
+                const radius = Math.min(this.image.width, this.image.height) / 2 * 0.9;
+                const angleSteps = 360;
+                
+                for (let i = 0; i < angleSteps; i++) {
+                    const angle = (i / angleSteps) * Math.PI * 2;
+                    const dx = Math.cos(angle);
+                    const dy = Math.sin(angle);
+                    
+                    this.edgePoints.push({
+                        angle: angle,
+                        radius: radius,
+                        x: centerX + dx * radius,
+                        y: centerY + dy * radius
+                    });
+                }
+                
+                console.log(`Created ${this.edgePoints.length} circular edge points (fallback) for ${this.imagePath}`);
+            }
+            
+            render() {
+                const ctx = this.ctx;
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                
+                // Calculate scale based on rotation
+                let normalizedRotation = ((this.rotation % 360) + 360) % 360;
+                if (normalizedRotation > 180) normalizedRotation -= 360;
+                
+                const rotRad = (normalizedRotation * Math.PI) / 180;
+                const scaleX = Math.cos(rotRad);
+                const absScaleX = Math.abs(scaleX);
+                
+                // Calculate edge properties
+                const edgeVisibility = 1 - absScaleX;
+                const edgeWidth = this.thickness * edgeVisibility;
+                const edgeDirection = normalizedRotation > 0 ? 1 : -1;
+                const edgeOffset = edgeWidth * edgeDirection;
+                
+                // Determine which faces are visible
+                const frontVisible = normalizedRotation >= -90 && normalizedRotation <= 90;
+                const backVisible = !frontVisible;
+                
+                // PAINTER'S ALGORITHM: Draw back to front
+                
+                if (frontVisible) {
+                    // FRONT is visible (rotation between -90 and 90)
+                    
+                    // 1. Back face at far end (only if there's edge showing)
+                    if (this.backImage && this.showEdge && absScaleX < 0.98) {
+                        ctx.save();
+                        ctx.translate(edgeOffset, 0);
+                        ctx.scale(-scaleX, 1); // Note: -scaleX to flip AND scale
+                        ctx.drawImage(
+                            this.backImage,
+                            -this.backImage.width / 2,
+                            -this.backImage.height / 2,
+                            this.backImage.width,
+                            this.backImage.height
+                        );
+                        ctx.restore();
+                    }
+                    
+                    // 2. Edge
+                    if (this.showEdge && absScaleX < 0.98) {
+                        this.drawEdge(scaleX, edgeDirection, edgeWidth, edgeOffset);
+                    }
+                    
+                    // 3. Front face (on top, at position 0)
+                    ctx.save();
+                    ctx.scale(scaleX, 1);
+                    ctx.drawImage(
+                        this.image,
+                        -this.image.width / 2,
+                        -this.image.height / 2,
+                        this.image.width,
+                        this.image.height
+                    );
+                    ctx.restore();
+                    
+                } else {
+                    // BACK is visible (rotation > 90 or < -90)
+                    
+                    // 1. Front face at far end (only if there's edge showing)
+                    if (this.showEdge && absScaleX < 0.98) {
+                        ctx.save();
+                        ctx.translate(edgeOffset, 0);
+                        ctx.scale(scaleX, 1);
+                        ctx.drawImage(
+                            this.image,
+                            -this.image.width / 2,
+                            -this.image.height / 2,
+                            this.image.width,
+                            this.image.height
+                        );
+                        ctx.restore();
+                    }
+                    
+                    // 2. Edge
+                    if (this.showEdge && absScaleX < 0.98) {
+                        this.drawEdge(scaleX, edgeDirection, edgeWidth, edgeOffset);
+                    }
+                    
+                    // 3. Back face (on top, at position 0)
+                    if (this.backImage) {
+                        ctx.save();
+                        ctx.scale(-scaleX, 1); // Note: -scaleX to flip AND scale
+                        ctx.drawImage(
+                            this.backImage,
+                            -this.backImage.width / 2,
+                            -this.backImage.height / 2,
+                            this.backImage.width,
+                            this.backImage.height
+                        );
+                        ctx.restore();
+                    }
+                }
+                
+                ctx.restore();
+                
+                // Debug: show outline
+                if (this.showOutline) {
+                    this.drawOutline();
+                }
+            }
+            
+            drawEdge(scaleX, edgeDirection, edgeWidth, edgeOffset) {
+                const ctx = this.ctx;
+                
+                if (edgeWidth < 0.5) return; // Don't draw if too thin
+                
+                ctx.save();
+                
+                // We're already in centered coordinate system from render()
+                // Edge points are in absolute canvas coords, so convert them to centered
+                const centerX = this.canvas.width / 2;
+                const centerY = this.canvas.height / 2;
+                
+                // Brightness values
+                const baseBrightness = 180 - (this.darkness * 130);
+                const highlightBrightness = 220 - (this.darkness * 100);
+                const shadowBrightness = 100 - (this.darkness * 60);
+                
+                // Draw each segment as a separate quad
+                for (let i = 0; i < this.edgePoints.length; i++) {
+                    const point = this.edgePoints[i];
+                    const nextPoint = this.edgePoints[(i + 1) % this.edgePoints.length];
+                    
+                    // Convert to centered coordinates (subtract center offset)
+                    const px = point.x - centerX;
+                    const py = point.y - centerY;
+                    const npx = nextPoint.x - centerX;
+                    const npy = nextPoint.y - centerY;
+                    
+                    // Four corners of the quad
+                    // Front edge (scaled by scaleX, at position 0)
+                    const x1 = px * scaleX;
+                    const y1 = py;
+                    const x2 = npx * scaleX;
+                    const y2 = npy;
+                    
+                    // Back edge (scaled, offset by thickness)
+                    const x3 = x2 + edgeOffset;
+                    const y3 = y2;
+                    const x4 = x1 + edgeOffset;
+                    const y4 = y1;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.lineTo(x3, y3);
+                    ctx.lineTo(x4, y4);
+                    ctx.closePath();
+                    
+                    // Calculate per-segment lighting
+                    const dx = x2 - x1;
+                    const dy = y2 - y1;
+                    const segmentAngle = Math.atan2(dy, dx);
+                    const normal = segmentAngle + Math.PI / 2;
+                    
+                    // Light from top-left
+                    const lightAngle = Math.PI * 0.75;
+                    const dotProduct = Math.cos(normal - lightAngle);
+                    const lightIntensity = (dotProduct + 1) / 2;
+                    
+                    // Interpolate brightness
+                    const segmentBrightness = shadowBrightness + (highlightBrightness - shadowBrightness) * lightIntensity;
+                    
+                    const r = Math.floor(segmentBrightness);
+                    const g = Math.floor(segmentBrightness - 20);
+                    const b = Math.floor(segmentBrightness - 40);
+                    
+                    ctx.fillStyle = `rgb(${Math.max(0, r)}, ${Math.max(0, g)}, ${Math.max(0, b)})`;
+                    ctx.fill();
+                    
+                    // Subtle outline
+                    ctx.strokeStyle = `rgba(0, 0, 0, 0.15)`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+            }
+            
+            drawOutline() {
+                const ctx = this.ctx;
+                
+                ctx.save();
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                
+                for (let i = 0; i < this.edgePoints.length; i++) {
+                    const point = this.edgePoints[i];
+                    if (i === 0) {
+                        ctx.moveTo(point.x, point.y);
+                    } else {
+                        ctx.lineTo(point.x, point.y);
+                    }
+                }
+                ctx.closePath();
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+            
+            setRotation(angle) {
+                this.rotation = angle;
+                this.render();
+            }
+            
+            setThickness(thickness) {
+                this.thickness = thickness;
+                this.render();
+            }
+            
+            setDarkness(darkness) {
+                this.darkness = darkness;
+                this.render();
+            }
+            
+            setShowEdge(show) {
+                this.showEdge = show;
+                this.render();
+            }
+            
+            setShowOutline(show) {
+                this.showOutline = show;
+                this.render();
+            }
+            
+            animate() {
+                if (!this.animating) return;
+                
+                this.rotation += this.animationSpeed;
+                if (this.rotation > 180) this.rotation = -180;
+                
+                this.render();
+                
+                // Update UI
+                document.getElementById('rotation').value = this.rotation;
+                document.getElementById('rotationValue').textContent = Math.round(this.rotation);
+                
+                requestAnimationFrame(() => this.animate());
+            }
+            
+            startAnimation() {
+                this.animating = true;
+                this.animate();
+            }
+            
+            stopAnimation() {
+                this.animating = false;
+            }
+            
+            reset() {
+                this.rotation = 0;
+                this.render();
+                document.getElementById('rotation').value = 0;
+                document.getElementById('rotationValue').textContent = 0;
+            }
+        }
+        
+        // Helper function to create a desaturated/silver version of an image
+        async function createSilverVersion(imagePath) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    
+                    for (let i = 0; i < data.length; i += 4) {
+                        const r = data[i];
+                        const g = data[i + 1];
+                        const b = data[i + 2];
+                        
+                        // Convert to grayscale with slight silver tint
+                        const gray = r * 0.299 + g * 0.587 + b * 0.114;
+                        
+                        data[i] = Math.min(255, gray * 0.95 + 20);     // R
+                        data[i + 1] = Math.min(255, gray * 0.97 + 20); // G
+                        data[i + 2] = Math.min(255, gray + 25);        // B
+                        // Alpha stays the same
+                    }
+                    
+                    ctx.putImageData(imageData, 0, 0);
+                    resolve(canvas.toDataURL());
+                };
+                img.src = imagePath;
+            });
+        }
+        
+        // Initialize medals
+        let medal1, medal2;
+        
+        window.addEventListener('load', async () => {
+            // Create silver back versions
+            const medal1Back = await createSilverVersion('images/medal1.png');
+            const medal2Back = await createSilverVersion('images/medal2.png');
+            
+            medal1 = new Medal3D('medal1', 'images/medal1.png', medal1Back);
+            medal2 = new Medal3D('medal2', 'images/medal2.png', medal2Back);
+            
+            // Set up controls
+            const rotationSlider = document.getElementById('rotation');
+            const rotationValue = document.getElementById('rotationValue');
+            const thicknessSlider = document.getElementById('thickness');
+            const thicknessValue = document.getElementById('thicknessValue');
+            const darknessSlider = document.getElementById('darkness');
+            const darknessValue = document.getElementById('darknessValue');
+            const speedSlider = document.getElementById('speed');
+            const speedValue = document.getElementById('speedValue');
+            const showEdgeCheckbox = document.getElementById('showEdge');
+            const showOutlineCheckbox = document.getElementById('showOutline');
+            
+            rotationSlider.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                rotationValue.textContent = Math.round(value);
+                medal1.setRotation(value);
+                medal2.setRotation(value);
+            });
+            
+            thicknessSlider.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                thicknessValue.textContent = value;
+                medal1.setThickness(value);
+                medal2.setThickness(value);
+            });
+            
+            darknessSlider.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value) / 100;
+                darknessValue.textContent = Math.round(value * 100);
+                medal1.setDarkness(value);
+                medal2.setDarkness(value);
+            });
+            
+            speedSlider.addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                speedValue.textContent = value.toFixed(1);
+                medal1.animationSpeed = value;
+                medal2.animationSpeed = value;
+            });
+            
+            showEdgeCheckbox.addEventListener('change', (e) => {
+                medal1.setShowEdge(e.target.checked);
+                medal2.setShowEdge(e.target.checked);
+            });
+            
+            showOutlineCheckbox.addEventListener('change', (e) => {
+                medal1.setShowOutline(e.target.checked);
+                medal2.setShowOutline(e.target.checked);
+            });
+            
+            document.getElementById('animate').addEventListener('click', () => {
+                medal1.startAnimation();
+                medal2.startAnimation();
+            });
+            
+            document.getElementById('stop').addEventListener('click', () => {
+                medal1.stopAnimation();
+                medal2.stopAnimation();
+            });
+            
+            document.getElementById('reset').addEventListener('click', () => {
+                medal1.stopAnimation();
+                medal2.stopAnimation();
+                medal1.reset();
+                medal2.reset();
+            });
+        });
+    </script>
+</body>
+</html>
+

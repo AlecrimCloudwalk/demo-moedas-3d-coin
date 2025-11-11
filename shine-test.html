@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shine Effect Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            min-height: 100vh;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .test-area {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+        
+        .medal-display {
+            width: 400px;
+            height: 400px;
+            margin: 0 auto 30px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .medal-container {
+            width: 300px;
+            height: 300px;
+            position: relative;
+        }
+        
+        .medal-image {
+            width: 100%;
+            height: 100%;
+            background-image: url('images/medal1.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        
+        .medal-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-gradient, linear-gradient(90deg, 
+                transparent 0%,
+                transparent 40%,
+                rgba(255,255,255,0.5) 45%,
+                rgba(255,255,255,1) 50%,
+                rgba(255,255,255,0.5) 55%,
+                transparent 60%,
+                transparent 100%));
+            background-size: 200% 200%;
+            background-position: var(--shine-bg-position, 0% 0%);
+            pointer-events: none;
+            opacity: var(--shine-opacity, 0);
+            filter: var(--blur-amount, blur(0px));
+            will-change: background-position;
+            -webkit-mask-image: var(--lightness-mask, none);
+            mask-image: var(--lightness-mask, none);
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+        }
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 500;
+            font-size: 16px;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        
+        .value-display {
+            min-width: 80px;
+            text-align: right;
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        button {
+            background: white;
+            color: #1e3c72;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .info {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .preview-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .preview-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .preview-box h3 {
+            margin-bottom: 10px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .preview-box img,
+        .preview-box canvas {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Shine Effect Test</h1>
+        
+        <div class="test-area">
+            <div class="medal-display">
+                <div class="medal-container">
+                    <div class="medal-image" id="medalImage"></div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label>Shine Position (simulates rotation)</label>
+                    <div class="control-row">
+                        <input type="range" id="shinePosition" min="0" max="360" value="0" step="1">
+                        <span class="value-display"><span id="positionValue">0</span>°</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Shine Opacity</label>
+                    <div class="control-row">
+                        <input type="range" id="shineOpacity" min="0" max="1" value="0.8" step="0.05">
+                        <span class="value-display"><span id="opacityValue">0.80</span></span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Blur Amount</label>
+                    <div class="control-row">
+                        <input type="range" id="blurAmount" min="0" max="50" value="0" step="1">
+                        <span class="value-display"><span id="blurValue">0</span>px</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Mask Contrast Power (higher = more contrasty)</label>
+                    <div class="control-row">
+                        <input type="range" id="maskContrast" min="0.5" max="5" value="2.5" step="0.1">
+                        <span class="value-display"><span id="contrastValue">2.5</span></span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label>Shine Angle (gradient direction)</label>
+                    <div class="control-row">
+                        <input type="range" id="shineAngle" min="0" max="360" value="90" step="1">
+                        <span class="value-display"><span id="angleValue">90</span>°</span>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="button-group">
+                        <button id="generateMask">Step 1: Generate Lightness Mask</button>
+                        <button id="applyMask" disabled>Step 2: Apply Mask to Shine</button>
+                        <button id="toggleMask" disabled>Toggle Mask On/Off</button>
+                    </div>
+                </div>
+                
+                <div class="info">
+                    <strong>Instructions:</strong><br>
+                    1. Use "Shine Position" slider to sweep the shine across the medal<br>
+                    2. Adjust "Shine Angle" to change the gradient direction (0° to 360°)<br>
+                    3. Click "Generate Lightness Mask" to create a mask from the image<br>
+                    4. Adjust "Mask Contrast Power" to control how strong the effect is<br>
+                    5. Click "Apply Mask" to use the lightness values to control shine visibility<br>
+                    6. Fine-tune with opacity and blur settings
+                </div>
+                
+                <div class="preview-images">
+                    <div class="preview-box">
+                        <h3>Original Image</h3>
+                        <img src="images/medal1.png" alt="Original">
+                    </div>
+                    <div class="preview-box">
+                        <h3>Lightness Mask</h3>
+                        <canvas id="maskPreview" width="300" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // =============================================================================
+        // SHINE EFFECT CLASS - Ready for integration into 3D medal
+        // =============================================================================
+        class ShineEffect {
+            constructor(targetElement, imagePath) {
+                this.element = targetElement;
+                this.imagePath = imagePath;
+                this.lightnessMask = null;
+                this.maskContrast = 2.5;
+                this.shineAngle = 90; // Default horizontal
+                
+                // Generate gradient with current angle
+                this.updateGradientAngle(this.shineAngle);
+            }
+            
+            // Update the gradient angle (0-360 degrees)
+            updateGradientAngle(angle) {
+                this.shineAngle = angle;
+                const gradient = `linear-gradient(${angle}deg, 
+                    transparent 0%,
+                    transparent 40%,
+                    rgba(255,255,255,0.5) 45%,
+                    rgba(255,255,255,1) 50%,
+                    rgba(255,255,255,0.5) 55%,
+                    transparent 60%,
+                    transparent 100%)`;
+                this.element.style.setProperty('--shine-gradient', gradient);
+            }
+            
+            // Update shine position (0-360, simulating rotation)
+            updateShinePosition(rotationAngle) {
+                const progress = rotationAngle / 360;
+                // Map to range that starts before medal and ends after
+                const bgPosition = -50 + (progress * 200); // -50% to 150%
+                this.element.style.setProperty('--shine-bg-position', `${bgPosition}% ${bgPosition}%`);
+            }
+            
+            // Set shine opacity (0-1)
+            setOpacity(opacity) {
+                this.element.style.setProperty('--shine-opacity', opacity);
+            }
+            
+            // Set blur amount (pixels)
+            setBlur(pixels) {
+                this.element.style.setProperty('--blur-amount', `blur(${pixels}px)`);
+            }
+            
+            // Generate lightness mask from image
+            generateLightnessMask() {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        ctx.drawImage(img, 0, 0);
+                        
+                        try {
+                            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            const data = imageData.data;
+                            
+                            // Create combined mask: alpha (shape) * lightness (intensity)
+                            for (let i = 0; i < data.length; i += 4) {
+                                const r = data[i];
+                                const g = data[i + 1];
+                                const b = data[i + 2];
+                                const alpha = data[i + 3];
+                                
+                                // Calculate perceived lightness
+                                const lightness = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+                                
+                                // Apply contrast (higher = more contrasty)
+                                const contrasty = Math.pow(lightness, this.maskContrast);
+                                const value = contrasty * 255;
+                                
+                                data[i] = value;
+                                data[i + 1] = value;
+                                data[i + 2] = value;
+                                data[i + 3] = (alpha / 255) * contrasty * 255;
+                            }
+                            
+                            ctx.putImageData(imageData, 0, 0);
+                            this.lightnessMask = canvas.toDataURL();
+                            
+                            resolve(this.lightnessMask);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    };
+                    img.onerror = () => reject(new Error('Failed to load image'));
+                    img.src = this.imagePath;
+                });
+            }
+            
+            // Apply mask to shine effect
+            applyMask() {
+                if (this.lightnessMask) {
+                    this.element.style.setProperty('--lightness-mask', `url(${this.lightnessMask})`);
+                }
+            }
+            
+            // Remove mask
+            removeMask() {
+                this.element.style.setProperty('--lightness-mask', 'none');
+            }
+        }
+        
+        // =============================================================================
+        // TEST UI - Demo controls (not needed for integration)
+        // =============================================================================
+        class ShineTest {
+            constructor() {
+                this.medalImage = document.getElementById('medalImage');
+                this.maskCanvas = document.getElementById('maskPreview');
+                this.shine = new ShineEffect(this.medalImage, 'images/medal1.png');
+                this.maskApplied = false;
+                
+                this.setupControls();
+            }
+            
+            setupControls() {
+                let animationFrame = null;
+                
+                // Shine position control
+                document.getElementById('shinePosition').addEventListener('input', (e) => {
+                    const value = parseInt(e.target.value);
+                    document.getElementById('positionValue').textContent = value;
+                    if (animationFrame) cancelAnimationFrame(animationFrame);
+                    animationFrame = requestAnimationFrame(() => {
+                        this.shine.updateShinePosition(value);
+                    });
+                });
+                
+                // Opacity control
+                document.getElementById('shineOpacity').addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    document.getElementById('opacityValue').textContent = value.toFixed(2);
+                    this.shine.setOpacity(value);
+                });
+                
+                // Blur control
+                document.getElementById('blurAmount').addEventListener('input', (e) => {
+                    const value = parseInt(e.target.value);
+                    document.getElementById('blurValue').textContent = value;
+                    this.shine.setBlur(value);
+                });
+                
+                // Mask contrast control
+                document.getElementById('maskContrast').addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    document.getElementById('contrastValue').textContent = value.toFixed(1);
+                    this.shine.maskContrast = value;
+                    if (this.shine.lightnessMask) {
+                        this.regenerateMask();
+                    }
+                });
+                
+                // Shine angle control
+                document.getElementById('shineAngle').addEventListener('input', (e) => {
+                    const value = parseInt(e.target.value);
+                    document.getElementById('angleValue').textContent = value;
+                    this.shine.updateGradientAngle(value);
+                });
+                
+                // Generate mask button
+                document.getElementById('generateMask').addEventListener('click', () => {
+                    this.regenerateMask();
+                });
+                
+                // Apply mask button
+                document.getElementById('applyMask').addEventListener('click', () => {
+                    this.shine.applyMask();
+                    this.maskApplied = true;
+                    document.getElementById('toggleMask').disabled = false;
+                    document.getElementById('toggleMask').textContent = 'Hide Mask';
+                });
+                
+                // Toggle mask button
+                document.getElementById('toggleMask').addEventListener('click', () => {
+                    if (this.maskApplied) {
+                        this.shine.removeMask();
+                        this.maskApplied = false;
+                        document.getElementById('toggleMask').textContent = 'Show Mask';
+                    } else {
+                        this.shine.applyMask();
+                        this.maskApplied = true;
+                        document.getElementById('toggleMask').textContent = 'Hide Mask';
+                    }
+                });
+                
+                // Initialize
+                this.shine.updateShinePosition(0);
+                this.shine.setOpacity(0.8);
+            }
+            
+            async regenerateMask() {
+                try {
+                    await this.shine.generateLightnessMask();
+                    
+                    // Update preview
+                    const previewCtx = this.maskCanvas.getContext('2d');
+                    previewCtx.clearRect(0, 0, this.maskCanvas.width, this.maskCanvas.height);
+                    const maskImg = new Image();
+                    maskImg.onload = () => {
+                        previewCtx.drawImage(maskImg, 0, 0, this.maskCanvas.width, this.maskCanvas.height);
+                    };
+                    maskImg.src = this.shine.lightnessMask;
+                    
+                    // Enable apply button
+                    document.getElementById('applyMask').disabled = false;
+                    
+                    // Auto-reapply if already applied
+                    if (this.maskApplied) {
+                        this.shine.applyMask();
+                    }
+                } catch (e) {
+                    console.error('Failed to create lightness mask:', e);
+                    alert('Error creating mask. The image may have CORS restrictions.');
+                }
+            }
+            
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            new ShineTest();
+        });
+    </script>
+</body>
+</html>
+

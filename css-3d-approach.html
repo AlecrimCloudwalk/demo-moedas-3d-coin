@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Medal - CSS Transform Approach</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .subtitle {
+            text-align: center;
+            opacity: 0.8;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .medals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .medal-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .medal-title {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .scene {
+            width: 100%;
+            height: 400px;
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .medal-3d {
+            width: 300px;
+            height: 300px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.05s linear;
+            cursor: pointer;
+        }
+        
+        .medal-3d.flipping {
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .medal-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            overflow: hidden;
+        }
+        
+        .medal-face::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--shine-gradient, linear-gradient(135deg, 
+                transparent 0%,
+                transparent 40%,
+                rgba(255,255,255,0.5) 45%,
+                rgba(255,255,255,1) 50%,
+                rgba(255,255,255,0.5) 55%,
+                transparent 60%,
+                transparent 100%));
+            background-size: 200% 200%;
+            background-position: var(--shine-bg-position, 0% 0%);
+            pointer-events: none;
+            opacity: var(--shine-opacity, 0);
+            filter: var(--blur-amount, blur(15px));
+            will-change: background-position;
+            -webkit-mask-image: var(--lightness-mask, none);
+            mask-image: var(--lightness-mask, none);
+            -webkit-mask-size: contain;
+            mask-size: contain;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+        }
+        
+        .medal-front {
+            transform: translateZ(15px);
+        }
+        
+        .medal-back {
+            transform: translateZ(-15px) rotateY(180deg);
+        }
+        
+        .medal-edge {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.1s linear;
+        }
+        
+        /* Edge container holds all edge segments */
+        .edge-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            pointer-events: none;
+        }
+        
+        /* Individual edge segments that form the perimeter extrusion */
+        .edge-segment {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform-style: preserve-3d;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.3), 
+                        inset 0 -1px 1px rgba(0,0,0,0.3);
+        }
+        
+        
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .value-display {
+            min-width: 60px;
+            text-align: right;
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        button {
+            background: white;
+            color: #1e3c72;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .info-box {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .info-box h3 {
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏅 3D Medal - CSS 3D Transform Approach</h1>
+        <p class="subtitle">Hardware-accelerated CSS 3D with preserve-3d</p>
+        
+        <div class="medals-grid">
+            <div class="medal-container">
+                <div class="medal-title">Medal 1 - Garden Theme</div>
+                <div class="scene">
+                    <div class="medal-3d" id="medal1">
+                        <div class="medal-front medal-face"></div>
+                        <div class="edge-container"></div>
+                        <div class="medal-back medal-face"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="medal-container">
+                <div class="medal-title">Medal 2 - Eagle Theme</div>
+                <div class="scene">
+                    <div class="medal-3d" id="medal2">
+                        <div class="medal-front medal-face"></div>
+                        <div class="edge-container"></div>
+                        <div class="medal-back medal-face"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>Rotation Angle (Y-axis)</label>
+                <div class="control-row">
+                    <input type="range" id="rotation" min="-180" max="180" value="0" step="1">
+                    <span class="value-display"><span id="rotationValue">0</span>°</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Medal Thickness</label>
+                <div class="control-row">
+                    <input type="range" id="thickness" min="5" max="50" value="15" step="1">
+                    <span class="value-display"><span id="thicknessValue">15</span>px</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Animation Speed</label>
+                <div class="control-row">
+                    <input type="range" id="speed" min="0.5" max="5" value="2" step="0.1">
+                    <span class="value-display"><span id="speedValue">2.0</span>x</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div class="button-group">
+                    <button id="animate">▶ Animate Rotation</button>
+                    <button id="stop">⏸ Stop</button>
+                    <button id="reset">↺ Reset</button>
+                </div>
+            </div>
+            
+            <hr style="margin: 25px 0; border: none; border-top: 1px solid rgba(255,255,255,0.2);">
+            
+            <h3 style="margin-bottom: 15px; color: #ffd700;">✨ Shine Effect Controls</h3>
+            
+            <div class="control-group">
+                <label>Shine Angle (gradient direction)</label>
+                <div class="control-row">
+                    <input type="range" id="shineAngle" min="0" max="360" value="135" step="1">
+                    <span class="value-display"><span id="shineAngleValue">135</span>°</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Blur Amount</label>
+                <div class="control-row">
+                    <input type="range" id="shineBlur" min="0" max="50" value="15" step="1">
+                    <span class="value-display"><span id="shineBlurValue">15</span>px</span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Mask Contrast Power</label>
+                <div class="control-row">
+                    <input type="range" id="maskContrast" min="0.5" max="5" value="2.5" step="0.1">
+                    <span class="value-display"><span id="maskContrastValue">2.5</span></span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>Max Shine Opacity</label>
+                <div class="control-row">
+                    <input type="range" id="shineOpacity" min="0" max="1" value="0.8" step="0.05">
+                    <span class="value-display"><span id="shineOpacityValue">0.80</span></span>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div class="button-group">
+                    <button id="regenerateMask">🔄 Regenerate Shine Masks</button>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <h3>✨ Technique: CSS 3D Transforms</h3>
+                <p><strong>Advantages:</strong></p>
+                <ul style="margin-left: 20px; margin-top: 5px;">
+                    <li>Hardware-accelerated (GPU)</li>
+                    <li>Browser handles Z-sorting automatically</li>
+                    <li>Smooth 60fps animations</li>
+                    <li>Clean, declarative code</li>
+                    <li>Proper backface culling built-in</li>
+                </ul>
+                <p style="margin-top: 10px;"><strong>How it works:</strong> Uses <code>transform-style: preserve-3d</code> to create a true 3D object with front face, edge ring, and back face positioned in 3D space. The browser's rendering engine handles all perspective and occlusion automatically.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // =============================================================================
+        // SHINE EFFECT CLASS
+        // =============================================================================
+        class ShineEffect {
+            constructor(targetElement, imagePath) {
+                this.element = targetElement;
+                this.imagePath = imagePath;
+                this.lightnessMask = null;
+                this.maskContrast = 2.5;
+                this.shineAngle = 135; // Default diagonal
+                
+                // Generate gradient with current angle
+                this.updateGradientAngle(this.shineAngle);
+            }
+            
+            // Update the gradient angle (0-360 degrees)
+            updateGradientAngle(angle) {
+                this.shineAngle = angle;
+                const gradient = `linear-gradient(${angle}deg, 
+                    transparent 0%,
+                    transparent 40%,
+                    rgba(255,255,255,0.5) 45%,
+                    rgba(255,255,255,1) 50%,
+                    rgba(255,255,255,0.5) 55%,
+                    transparent 60%,
+                    transparent 100%)`;
+                this.element.style.setProperty('--shine-gradient', gradient);
+            }
+            
+            // Update shine position (0-360, simulating rotation)
+            updateShinePosition(rotationAngle) {
+                const progress = rotationAngle / 360;
+                // Map to range that starts before medal and ends after
+                const bgPosition = -50 + (progress * 200); // -50% to 150%
+                this.element.style.setProperty('--shine-bg-position', `${bgPosition}% ${bgPosition}%`);
+            }
+            
+            // Set shine opacity (0-1)
+            setOpacity(opacity) {
+                this.element.style.setProperty('--shine-opacity', opacity);
+            }
+            
+            // Set blur amount (pixels)
+            setBlur(pixels) {
+                this.element.style.setProperty('--blur-amount', `blur(${pixels}px)`);
+            }
+            
+            // Generate lightness mask from image
+            generateLightnessMask() {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        
+                        ctx.drawImage(img, 0, 0);
+                        
+                        try {
+                            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            const data = imageData.data;
+                            
+                            // Create combined mask: alpha (shape) * lightness (intensity)
+                            for (let i = 0; i < data.length; i += 4) {
+                                const r = data[i];
+                                const g = data[i + 1];
+                                const b = data[i + 2];
+                                const alpha = data[i + 3];
+                                
+                                // Calculate perceived lightness
+                                const lightness = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+                                
+                                // Apply contrast (higher = more contrasty)
+                                const contrasty = Math.pow(lightness, this.maskContrast);
+                                const value = contrasty * 255;
+                                
+                                data[i] = value;
+                                data[i + 1] = value;
+                                data[i + 2] = value;
+                                data[i + 3] = (alpha / 255) * contrasty * 255;
+                            }
+                            
+                            ctx.putImageData(imageData, 0, 0);
+                            this.lightnessMask = canvas.toDataURL();
+                            
+                            resolve(this.lightnessMask);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    };
+                    img.onerror = () => reject(new Error('Failed to load image'));
+                    img.src = this.imagePath;
+                });
+            }
+            
+            // Apply mask to shine effect
+            applyMask() {
+                if (this.lightnessMask) {
+                    this.element.style.setProperty('--lightness-mask', `url(${this.lightnessMask})`);
+                }
+            }
+            
+            // Remove mask
+            removeMask() {
+                this.element.style.setProperty('--lightness-mask', 'none');
+            }
+        }
+        
+        // =============================================================================
+        // MEDAL 3D CLASS
+        // =============================================================================
+        class Medal3DCSS {
+            constructor(elementId, frontImage, backImage) {
+                this.element = document.getElementById(elementId);
+                this.frontFace = this.element.querySelector('.medal-front');
+                this.backFace = this.element.querySelector('.medal-back');
+                this.edgeContainer = this.element.querySelector('.edge-container');
+                
+                this.rotation = 0;
+                this.thickness = 15;
+                this.animating = false;
+                this.animationSpeed = 2;
+                this.frontImagePath = frontImage;
+                this.edgePoints = [];
+                this.imageSize = 0;
+                this.edgeSegments = [];
+                this.isFlipping = false;
+                this.maxShineOpacity = 0.8;
+                
+                // Set images
+                this.frontFace.style.backgroundImage = `url(${frontImage})`;
+                this.backFace.style.backgroundImage = `url(${backImage})`;
+                
+                // Create shine effect for front face
+                this.shineEffect = new ShineEffect(this.frontFace, frontImage);
+                
+                // Add click handler for flip
+                this.element.addEventListener('click', () => this.flip());
+                
+                this.init();
+            }
+            
+            async init() {
+                await this.extractOutline();
+                this.createEdgeSegments();
+                this.updateThickness();
+                this.updateGradient(0, false);
+                
+                // Generate and apply shine mask
+                try {
+                    await this.shineEffect.generateLightnessMask();
+                    this.shineEffect.applyMask();
+                    this.shineEffect.setOpacity(0); // Start hidden
+                    this.shineEffect.setBlur(15);
+                } catch (e) {
+                    console.error('Failed to create shine effect:', e);
+                }
+                
+                this.setRotation(0);
+            }
+            
+            extractOutline() {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    img.onload = () => {
+                        // Store the max dimension for scaling calculations
+                        this.imageSize = Math.max(img.width, img.height);
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                        
+                        ctx.drawImage(img, 0, 0);
+                        
+                        try {
+                            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+                            const data = imageData.data;
+                            
+                            const centerX = img.width / 2;
+                            const centerY = img.height / 2;
+                            const angleSteps = 120; // segments around perimeter (reduced for performance)
+                            
+                            for (let i = 0; i < angleSteps; i++) {
+                                const angle = (i / angleSteps) * Math.PI * 2;
+                                const dx = Math.cos(angle);
+                                const dy = Math.sin(angle);
+                                
+                                // Cast ray from center to find edge
+                                let maxRadius = 0;
+                                for (let r = 0; r < Math.max(img.width, img.height) / 2; r++) {
+                                    const x = Math.floor(centerX + dx * r);
+                                    const y = Math.floor(centerY + dy * r);
+                                    
+                                    if (x >= 0 && x < img.width && y >= 0 && y < img.height) {
+                                        const idx = (y * img.width + x) * 4;
+                                        const alpha = data[idx + 3];
+                                        if (alpha > 128) {
+                                            maxRadius = r;
+                                        }
+                                    }
+                                }
+                                
+                                this.edgePoints.push({
+                                    angle: angle,
+                                    radius: maxRadius,
+                                    x: dx * maxRadius,
+                                    y: dy * maxRadius
+                                });
+                            }
+                            
+                            console.log(`Extracted ${this.edgePoints.length} edge points`);
+                        } catch (e) {
+                            console.error('Failed to extract outline:', e);
+                            // Fallback to circle
+                            this.createCircularOutline();
+                        }
+                        
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        console.error('Failed to load image');
+                        this.createCircularOutline();
+                        resolve();
+                    };
+                    img.src = this.frontImagePath;
+                });
+            }
+            
+            createCircularOutline() {
+                this.imageSize = 300; // Fallback assumes 300px square image
+                const angleSteps = 120;
+                const radius = 150;
+                for (let i = 0; i < angleSteps; i++) {
+                    const angle = (i / angleSteps) * Math.PI * 2;
+                    this.edgePoints.push({
+                        angle: angle,
+                        radius: radius,
+                        x: Math.cos(angle) * radius,
+                        y: Math.sin(angle) * radius
+                    });
+                }
+            }
+            
+            createEdgeSegments() {
+                // Clear any existing segments
+                this.edgeContainer.innerHTML = '';
+                this.edgeSegments = [];
+                
+                // Scale factor from image to container (300px)
+                const containerSize = 300;
+                const scaleFactor = containerSize / this.imageSize;
+                
+                // Create segments between consecutive edge points
+                for (let i = 0; i < this.edgePoints.length; i++) {
+                    const currentPoint = this.edgePoints[i];
+                    const nextPoint = this.edgePoints[(i + 1) % this.edgePoints.length];
+                    
+                    // Scale points to container size
+                    const x1 = currentPoint.x * scaleFactor;
+                    const y1 = currentPoint.y * scaleFactor;
+                    const x2 = nextPoint.x * scaleFactor;
+                    const y2 = nextPoint.y * scaleFactor;
+                    
+                    // Calculate segment width (distance between points)
+                    // Add slight overlap (1.5px) to eliminate gaps between segments
+                    const width = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) + 1.5;
+                    
+                    // Midpoint position
+                    const midX = (x1 + x2) / 2;
+                    const midY = (y1 + y2) / 2;
+                    
+                    // Angle of the segment along the perimeter (tangent)
+                    const tangentAngle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+                    
+                    // Create segment element (color will be set by updateGradient)
+                    const segment = document.createElement('div');
+                    segment.className = 'edge-segment';
+                    segment.style.width = `${width}px`;
+                    segment.style.height = `${this.thickness}px`;
+                    
+                    // Position at perimeter, rotate to follow tangent, then tilt outward perpendicular
+                    // Transform origin at center (50% 50%) so it's centered on the perimeter
+                    segment.style.transformOrigin = '50% 50%';
+                    
+                    const baseTransform = `translate(-50%, -50%) translate(${midX}px, ${midY}px) rotateZ(${tangentAngle}deg) rotateX(90deg) translateZ(0px)`;
+                    
+                    segment.setAttribute('data-base-transform', baseTransform);
+                    segment.style.transform = baseTransform;
+                    
+                    this.edgeContainer.appendChild(segment);
+                    this.edgeSegments.push(segment);
+                }
+                
+                console.log(`Created ${this.edgeSegments.length} edge segments`);
+            }
+            
+            updateThickness() {
+                const halfThickness = this.thickness / 2;
+                
+                // Update face positions
+                this.frontFace.style.transform = `translateZ(${halfThickness}px)`;
+                this.backFace.style.transform = `translateZ(-${halfThickness}px) rotateY(180deg)`;
+                
+                // Update edge segment heights (which become depth when rotated)
+                this.edgeSegments.forEach(segment => {
+                    segment.style.height = `${this.thickness}px`;
+                });
+            }
+            
+            setRotation(angle) {
+                this.rotation = angle;
+                this.element.style.transform = `rotateY(${angle}deg)`;
+                
+                // Normalize angle to 0-360 for flip logic only
+                const normalizedAngle = ((angle % 360) + 360) % 360;
+                // Correct between -90 to 90, so flip when OUTSIDE that range (90-270 in normalized form)
+                const needsFlip = normalizedAngle > 90 && normalizedAngle < 270;
+                
+                // Apply rotateY(180deg) to the ENTIRE edge container to match the mirrored outline
+                if (needsFlip) {
+                    // Rotate the entire extrusion mesh 180° to match the back view
+                    this.edgeContainer.style.transform = 'rotateY(180deg)';
+                } else {
+                    // Normal orientation
+                    this.edgeContainer.style.transform = '';
+                }
+                
+                // Update gradient - use RAW angle for continuous movement, but pass flip state
+                this.updateGradient(angle, needsFlip);
+                
+                // Update shine effect
+                this.shineEffect.updateShinePosition(normalizedAngle);
+                
+                // Calculate opacity based on viewing angle (visible from -90 to 90 degrees)
+                let opacity = 0;
+                if (normalizedAngle <= 90) {
+                    opacity = this.maxShineOpacity;
+                } else if (normalizedAngle >= 270) {
+                    opacity = this.maxShineOpacity;
+                }
+                this.shineEffect.setOpacity(opacity);
+            }
+            
+            updateGradient(rotationAngle, needsFlip) {
+                // Use raw rotation for continuous movement (not wrapped/normalized)
+                const lightOffset = (rotationAngle / 360) * Math.PI * 2;
+                
+                // When mesh is flipped, add PI offset to shift gradient by half cycle
+                // This compensates for the visual reversal of segment order
+                const flipOffset = needsFlip ? Math.PI : 0;
+                
+                this.edgeSegments.forEach((segment, index) => {
+                    // Use actual index without reversal
+                    const segmentAngle = (index / this.edgeSegments.length) * Math.PI * 2;
+                    
+                    // Combine segment position angle with rotation and flip offset
+                    const lightAngle = segmentAngle + lightOffset + flipOffset;
+                    
+                    // Create harsh metallic gradient with high contrast
+                    // More dramatic sine waves for sharper reflections
+                    const mainReflection = Math.pow(Math.sin(lightAngle) * 0.5 + 0.5, 1.5); // 0 to 1, more contrast
+                    const detailReflection = Math.sin(lightAngle * 5) * 0.25; // Harsher, more frequent details
+                    const highlight = Math.pow(Math.max(0, Math.sin(lightAngle)), 32) * 0.5; // Very sharp, intense highlight
+                    
+                    // Combine reflections for harsh metallic look
+                    const reflectionValue = mainReflection + detailReflection + highlight;
+                    
+                    // Map to wider silver color range with more contrast (25% to 100% lightness)
+                    const lightness = 25 + (reflectionValue * 75);
+                    
+                    segment.style.backgroundColor = `hsl(0, 0%, ${lightness}%)`;
+                });
+            }
+            
+            setThickness(thickness) {
+                this.thickness = thickness;
+                this.updateThickness();
+            }
+            
+            animate() {
+                if (!this.animating) return;
+                
+                this.rotation += this.animationSpeed;
+                // Let rotation continue indefinitely for smooth looping
+                
+                this.setRotation(this.rotation);
+                
+                // Update UI with clamped value for slider
+                const displayRotation = ((this.rotation + 180) % 360) - 180;
+                document.getElementById('rotation').value = displayRotation;
+                document.getElementById('rotationValue').textContent = Math.round(this.rotation);
+                
+                requestAnimationFrame(() => this.animate());
+            }
+            
+            startAnimation() {
+                this.animating = true;
+                this.animate();
+            }
+            
+            stopAnimation() {
+                this.animating = false;
+            }
+            
+            reset() {
+                this.rotation = 0;
+                this.setRotation(0);
+                document.getElementById('rotation').value = 0;
+                document.getElementById('rotationValue').textContent = 0;
+            }
+            
+            flip() {
+                if (this.isFlipping) return; // Prevent multiple flips at once
+                
+                this.isFlipping = true;
+                this.element.classList.add('flipping');
+                
+                // Calculate target rotation (flip 180 degrees from current position)
+                const targetRotation = this.rotation + 180;
+                
+                // Animate with expo out easing
+                const startRotation = this.rotation;
+                const startTime = performance.now();
+                const duration = 1200; // ms
+                
+                const animateFlip = (currentTime) => {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Expo out easing: https://easings.net/#easeOutExpo
+                    const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+                    
+                    const currentRotation = startRotation + (180 * eased);
+                    this.setRotation(currentRotation);
+                    
+                    // Update UI
+                    const displayRotation = ((currentRotation + 180) % 360) - 180;
+                    document.getElementById('rotation').value = displayRotation;
+                    document.getElementById('rotationValue').textContent = Math.round(currentRotation);
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animateFlip);
+                    } else {
+                        this.rotation = targetRotation;
+                        this.element.classList.remove('flipping');
+                        this.isFlipping = false;
+                    }
+                };
+                
+                requestAnimationFrame(animateFlip);
+            }
+        }
+        
+        // Create silver versions
+        function createSilverVersion(imagePath) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    
+                    for (let i = 0; i < data.length; i += 4) {
+                        const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                        data[i] = Math.min(255, gray * 0.95 + 20);
+                        data[i + 1] = Math.min(255, gray * 0.97 + 20);
+                        data[i + 2] = Math.min(255, gray + 25);
+                    }
+                    
+                    ctx.putImageData(imageData, 0, 0);
+                    resolve(canvas.toDataURL());
+                };
+                img.src = imagePath;
+            });
+        }
+        
+        // Initialize
+        let medal1, medal2;
+        
+        window.addEventListener('load', async () => {
+            const medal1Back = await createSilverVersion('images/medal1.png');
+            const medal2Back = await createSilverVersion('images/medal2.png');
+            
+            medal1 = new Medal3DCSS('medal1', 'images/medal1.png', medal1Back);
+            medal2 = new Medal3DCSS('medal2', 'images/medal2.png', medal2Back);
+            
+            // Controls
+            document.getElementById('rotation').addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('rotationValue').textContent = Math.round(value);
+                medal1.setRotation(value);
+                medal2.setRotation(value);
+            });
+            
+            document.getElementById('thickness').addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('thicknessValue').textContent = value;
+                medal1.setThickness(value);
+                medal2.setThickness(value);
+            });
+            
+            document.getElementById('speed').addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('speedValue').textContent = value.toFixed(1);
+                medal1.animationSpeed = value;
+                medal2.animationSpeed = value;
+            });
+            
+            document.getElementById('animate').addEventListener('click', () => {
+                medal1.startAnimation();
+                medal2.startAnimation();
+            });
+            
+            document.getElementById('stop').addEventListener('click', () => {
+                medal1.stopAnimation();
+                medal2.stopAnimation();
+            });
+            
+            document.getElementById('reset').addEventListener('click', () => {
+                medal1.stopAnimation();
+                medal2.stopAnimation();
+                medal1.reset();
+                medal2.reset();
+            });
+            
+            // Shine Effect Controls
+            document.getElementById('shineAngle').addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                document.getElementById('shineAngleValue').textContent = value;
+                medal1.shineEffect.updateGradientAngle(value);
+                medal2.shineEffect.updateGradientAngle(value);
+            });
+            
+            document.getElementById('shineBlur').addEventListener('input', (e) => {
+                const value = parseInt(e.target.value);
+                document.getElementById('shineBlurValue').textContent = value;
+                medal1.shineEffect.setBlur(value);
+                medal2.shineEffect.setBlur(value);
+            });
+            
+            document.getElementById('maskContrast').addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('maskContrastValue').textContent = value.toFixed(1);
+                medal1.shineEffect.maskContrast = value;
+                medal2.shineEffect.maskContrast = value;
+            });
+            
+            document.getElementById('shineOpacity').addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('shineOpacityValue').textContent = value.toFixed(2);
+                medal1.maxShineOpacity = value;
+                medal2.maxShineOpacity = value;
+                // Re-apply current rotation to update opacity
+                medal1.setRotation(medal1.rotation);
+                medal2.setRotation(medal2.rotation);
+            });
+            
+            document.getElementById('regenerateMask').addEventListener('click', async () => {
+                const btn = document.getElementById('regenerateMask');
+                btn.disabled = true;
+                btn.textContent = '⏳ Regenerating...';
+                
+                try {
+                    await medal1.shineEffect.generateLightnessMask();
+                    medal1.shineEffect.applyMask();
+                    
+                    await medal2.shineEffect.generateLightnessMask();
+                    medal2.shineEffect.applyMask();
+                    
+                    btn.textContent = '✓ Masks Regenerated!';
+                    setTimeout(() => {
+                        btn.textContent = '🔄 Regenerate Shine Masks';
+                        btn.disabled = false;
+                    }, 2000);
+                } catch (e) {
+                    console.error('Failed to regenerate masks:', e);
+                    btn.textContent = '❌ Error - Try Again';
+                    btn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
