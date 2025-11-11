@@ -12,12 +12,18 @@
         }
         
         body {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            background: #f5f5f0; /* Off-white */
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white;
+            color: #333;
             min-height: 100vh;
             padding: 20px;
             overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        body.dark-mode {
+            background: #2a2a2a; /* Dark grey */
+            color: #e0e0e0;
         }
         
         .container {
@@ -25,10 +31,20 @@
             margin: 0 auto;
         }
         
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
         h1 {
             text-align: center;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            flex: 1;
+            min-width: 200px;
         }
         
         .subtitle {
@@ -38,13 +54,94 @@
             font-size: 14px;
         }
         
+        .title-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .medal-title-with-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .medal-title-text {
+            font-size: 20px;
+            font-weight: bold;
+            min-height: 28px;
+        }
+        
+        .top-button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .top-button-group button {
+            padding: 8px 16px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.1);
+            color: inherit;
+            transition: all 0.2s ease;
+        }
+        
+        body.dark-mode .top-button-group button {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .top-button-group button:hover {
+            background: rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        body.dark-mode .top-button-group button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark-mode-toggle {
+            padding: 8px 16px;
+            font-size: 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: rgba(0, 0, 0, 0.1);
+            color: inherit;
+            transition: all 0.2s ease;
+        }
+        
+        body.dark-mode .dark-mode-toggle {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .dark-mode-toggle:hover {
+            background: rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+        }
+        
+        body.dark-mode .dark-mode-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
         /* Main Medal Display */
         .medal-display {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.5);
             border-radius: 15px;
             padding: 30px;
             backdrop-filter: blur(10px);
             margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.dark-mode .medal-display {
+            background: rgba(0, 0, 0, 0.3);
         }
         
         .medal-title {
@@ -112,6 +209,10 @@
             cursor: pointer;
         }
         
+        .medal-3d.hover-rotate {
+            transition: transform 0.2s ease-out;
+        }
+        
         .medal-3d.flipping {
             transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -151,10 +252,10 @@
         /* Shine gradient - moving inside container */
         .shine-gradient {
             position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: var(--shine-gradient, linear-gradient(135deg, 
                 transparent 0%,
                 transparent 45%,
@@ -163,9 +264,10 @@
                 rgba(255,255,255,0.8) 52%,
                 transparent 55%,
                 transparent 100%));
-            transform: translateX(var(--shine-position, -150%));
+            background-size: 400% 400%;
+            background-position: var(--shine-position, 0% 0%);
             filter: var(--blur-amount, blur(15px));
-            will-change: transform;
+            will-change: background-position;
         }
         
         .medal-front {
@@ -203,11 +305,16 @@
         
         /* Thumbnail Library */
         .library-section {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.5);
             border-radius: 15px;
             padding: 25px;
             backdrop-filter: blur(10px);
             margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.dark-mode .library-section {
+            background: rgba(0, 0, 0, 0.3);
         }
         
         .library-title {
@@ -228,7 +335,7 @@
         
         .thumbnail {
             aspect-ratio: 1;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.1);
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -237,10 +344,18 @@
             position: relative;
         }
         
+        body.dark-mode .thumbnail {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
         .thumbnail:hover {
             transform: translateY(-3px);
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.2);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        body.dark-mode .thumbnail:hover {
+            background: rgba(255, 255, 255, 0.15);
         }
         
         .thumbnail.active {
@@ -274,10 +389,15 @@
         
         /* Controls */
         .controls {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.5);
             border-radius: 15px;
             padding: 25px;
             backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        body.dark-mode .controls {
+            background: rgba(0, 0, 0, 0.3);
         }
         
         .control-group {
@@ -300,9 +420,13 @@
             flex: 1;
             height: 6px;
             border-radius: 3px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.2);
             outline: none;
             -webkit-appearance: none;
+        }
+        
+        body.dark-mode input[type="range"] {
+            background: rgba(255, 255, 255, 0.2);
         }
         
         input[type="range"]::-webkit-slider-thumb {
@@ -335,21 +459,31 @@
         }
         
         button {
-            background: white;
-            color: #1e3c72;
-            border: none;
+            background: rgba(0, 0, 0, 0.2);
+            color: inherit;
+            border: 1px solid rgba(0, 0, 0, 0.2);
             padding: 12px 24px;
             border-radius: 8px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
             margin-right: 10px;
+        }
+        
+        body.dark-mode button {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
         }
         
         button:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        body.dark-mode button:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
         
         button:active {
@@ -369,12 +503,16 @@
         }
         
         .info-box {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(0, 0, 0, 0.1);
             padding: 15px;
             border-radius: 10px;
             margin-top: 20px;
             font-size: 14px;
             line-height: 1.6;
+        }
+        
+        body.dark-mode .info-box {
+            background: rgba(255, 255, 255, 0.05);
         }
         
         .info-box h3 {
@@ -385,18 +523,32 @@
         hr {
             margin: 25px 0;
             border: none;
-            border-top: 1px solid rgba(255,255,255,0.2);
+            border-top: 1px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        body.dark-mode hr {
+            border-top-color: rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🏅 3D Medal Library</h1>
+        <div class="header-controls">
+            <h1>🏅 3D Medal Library</h1>
+            <button class="dark-mode-toggle" id="darkModeToggle">🌙 Dark Mode</button>
+        </div>
         <p class="subtitle">Click any thumbnail to load a different medal</p>
         
         <!-- Main Medal Display -->
         <div class="medal-display">
-            <div class="medal-title" id="currentMedalName">Loading...</div>
+            <div class="medal-title-with-controls">
+                <div class="medal-title-text" id="currentMedalName">Loading...</div>
+                <div class="top-button-group">
+                    <button id="animate">▶ Animate</button>
+                    <button id="stop">⏸ Stop</button>
+                    <button id="reset">↺ Reset</button>
+                </div>
+            </div>
             <div class="scene">
                 <div class="loading-overlay" id="loadingOverlay">
                     <div class="spinner"></div>
@@ -442,16 +594,8 @@
             <div class="control-group">
                 <label>Animation Speed</label>
                 <div class="control-row">
-                    <input type="range" id="speed" min="0.5" max="5" value="2" step="0.1">
-                    <span class="value-display"><span id="speedValue">2.0</span>x</span>
-                </div>
-            </div>
-            
-            <div class="control-group">
-                <div class="button-group">
-                    <button id="animate">▶ Animate Rotation</button>
-                    <button id="stop">⏸ Stop</button>
-                    <button id="reset">↺ Reset</button>
+                    <input type="range" id="speed" min="0.5" max="5" value="0.5" step="0.1">
+                    <span class="value-display"><span id="speedValue">0.5</span>x</span>
                 </div>
             </div>
             
@@ -478,8 +622,8 @@
             <div class="control-group">
                 <label>Mask Contrast Power</label>
                 <div class="control-row">
-                    <input type="range" id="maskContrast" min="0.5" max="5" value="1.5" step="0.1">
-                    <span class="value-display"><span id="maskContrastValue">1.5</span></span>
+                    <input type="range" id="maskContrast" min="0.5" max="5" value="0.5" step="0.1">
+                    <span class="value-display"><span id="maskContrastValue">0.5</span></span>
                 </div>
             </div>
             
@@ -537,8 +681,14 @@
                 this.gradient = gradient;     // .shine-gradient
                 this.imagePath = imagePath;
                 this.lightnessMask = null;
-                this.maskContrast = 1.5;
+                this.maskContrast = 0.5;
                 this.shineAngle = 135;
+                this.previousNormalizedAngle = null; // Track previous angle for smooth wraparound
+                this.unwrappedAngle = null; // Track unwrapped angle for continuous movement
+                this.smoothedUnwrappedAngle = null; // Smoothed version of unwrapped angle
+                this.currentBgPosition = null; // Current smoothed position
+                this.targetBgPosition = null; // Target position to lerp towards
+                this.lastUpdateTime = null; // For time-based smoothing
                 
                 this.updateGradientAngle(this.shineAngle);
             }
@@ -556,20 +706,94 @@
                 this.gradient.style.setProperty('--shine-gradient', gradient);
             }
             
-            updateShinePosition(rotationAngle) {
-                // Map rotation angle to transform position
-                // Shine sweeps once from -60 to 60 degrees
+            updateShinePosition(rotationAngle, isFlipping = false) {
+                // Map rotation angle to background position
+                // Shine sweeps twice: from -90 to 0, then from 0 to 90
+                // At 0 degrees, shine is offset off-screen
+                //
+                // Background is 400% size, so we can position the stripe anywhere
+                // Background-position controls where the stripe appears
                 
                 // Normalize the angle to -180 to 180 range for calculation
                 let normalizedAngle = ((rotationAngle + 180) % 360) - 180;
                 
-                // Map -60 to 60 degree range to translateX from -150% to 150%
-                // At -60deg: position = -150% (shine completely off-screen left)
-                // At 0deg: position = 0% (shine in center)
-                // At 60deg: position = 150% (shine completely off-screen right)
-                const position = (normalizedAngle / 60) * 150;
+                // Handle edge case: 180 should be treated as -180 for consistency
+                if (normalizedAngle === 180) {
+                    normalizedAngle = -180;
+                }
                 
-                this.gradient.style.setProperty('--shine-position', `${position}%`);
+                // Unwrap the angle to handle continuous rotation smoothly
+                // This prevents jumps when crossing the -180/180 boundary
+                if (this.unwrappedAngle === null) {
+                    this.unwrappedAngle = normalizedAngle;
+                    this.smoothedUnwrappedAngle = normalizedAngle;
+                } else {
+                    // Calculate the shortest path from previous unwrapped angle to new normalized angle
+                    // First, normalize the unwrapped angle to -180 to 180 range for comparison
+                    let prevNormalized = ((this.unwrappedAngle + 180) % 360) - 180;
+                    if (prevNormalized === 180) prevNormalized = -180;
+                    
+                    // Calculate delta between normalized angles
+                    let delta = normalizedAngle - prevNormalized;
+                    
+                    // If the delta is more than 180 degrees, we wrapped around
+                    if (delta > 180) {
+                        delta -= 360;
+                    } else if (delta < -180) {
+                        delta += 360;
+                    }
+                    
+                    // Update unwrapped angle by the delta
+                    this.unwrappedAngle += delta;
+                    
+                    // Smooth the unwrapped angle to slow down shine movement relative to rotation
+                    // This prevents the shine from moving too fast during rapid rotations
+                    const now = performance.now();
+                    if (this.lastUpdateTime === null) {
+                        this.lastUpdateTime = now;
+                    }
+                    const deltaTime = (now - this.lastUpdateTime) / 1000;
+                    this.lastUpdateTime = now;
+                    
+                    // Smooth the angle change - use slower smoothing during flips
+                    // Lower factor = slower movement relative to rotation
+                    // During flips, use much slower smoothing (0.2) vs normal (0.5)
+                    const smoothingBase = isFlipping ? 0.2 : 0.5;
+                    const angleSmoothingFactor = 1 - Math.pow(smoothingBase, deltaTime * 60);
+                    const angleDelta = this.unwrappedAngle - this.smoothedUnwrappedAngle;
+                    this.smoothedUnwrappedAngle += angleDelta * angleSmoothingFactor;
+                }
+                
+                // Map the smoothed unwrapped angle to position
+                // The shine sweeps from -90° to 90° (180° range)
+                // We use modulo to wrap the angle into this range continuously
+                let angleForPosition = this.smoothedUnwrappedAngle;
+                
+                // Wrap angle into -90 to 90 range continuously using modulo
+                // This creates smooth, continuous movement even during rapid rotations
+                // Shift to 0-180 range, apply modulo, then shift back
+                angleForPosition = ((angleForPosition + 90) % 180);
+                if (angleForPosition < 0) angleForPosition += 180;
+                angleForPosition -= 90;
+                
+                let bgPosition;
+                
+                if (angleForPosition >= -90 && angleForPosition <= 0) {
+                    // First pass: -90° to 0°
+                    // Map -90° to 0° range to background-position from 0% to 25%
+                    bgPosition = ((angleForPosition + 90) / 90) * 25;
+                } else if (angleForPosition > 0 && angleForPosition <= 90) {
+                    // Second pass: 0° to 90°
+                    // Map 0° to 90° range to background-position from 25% to 100%
+                    bgPosition = 25 + (angleForPosition / 90) * 75;
+                } else {
+                    // Should never reach here, but safety check
+                    bgPosition = angleForPosition < -90 ? 0 : 100;
+                }
+                
+                // Use the calculated position directly (no additional smoothing needed since we smoothed the angle)
+                this.previousNormalizedAngle = normalizedAngle;
+                this.gradient.style.setProperty('--shine-position', `${bgPosition}% ${bgPosition}%`);
             }
             
             setOpacity(opacity) {
@@ -687,22 +911,33 @@
                 this.rotation = 0;
                 this.thickness = 15;
                 this.animating = false;
-                this.animationSpeed = 2;
+                this.animationSpeed = 0.5;
                 this.frontImagePath = null;
                 this.edgePoints = [];
                 this.imageSize = 0;
                 this.edgeSegments = [];
                 this.isFlipping = false;
                 this.maxShineOpacity = 0.8;
-                this.shineEffect = null;
+                this.isPageHovered = false; // Track if page is being hovered
+                this.hoverRotationDisabled = false; // Track if hover rotation is temporarily disabled
+                this.shineEffectFront = null;
+                this.shineEffectBack = null;
                 
-                // Create shine elements
-                this.shineContainer = document.createElement('div');
-                this.shineContainer.className = 'shine-container';
-                this.shineGradient = document.createElement('div');
-                this.shineGradient.className = 'shine-gradient';
-                this.shineContainer.appendChild(this.shineGradient);
-                this.frontFace.appendChild(this.shineContainer);
+                // Create shine elements for front face
+                this.shineContainerFront = document.createElement('div');
+                this.shineContainerFront.className = 'shine-container';
+                this.shineGradientFront = document.createElement('div');
+                this.shineGradientFront.className = 'shine-gradient';
+                this.shineContainerFront.appendChild(this.shineGradientFront);
+                this.frontFace.appendChild(this.shineContainerFront);
+                
+                // Create shine elements for back face
+                this.shineContainerBack = document.createElement('div');
+                this.shineContainerBack.className = 'shine-container';
+                this.shineGradientBack = document.createElement('div');
+                this.shineGradientBack.className = 'shine-gradient';
+                this.shineContainerBack.appendChild(this.shineGradientBack);
+                this.backFace.appendChild(this.shineContainerBack);
                 
                 this.element.addEventListener('click', () => this.flip());
             }
@@ -742,37 +977,54 @@
                 const currentAngle = parseInt(document.getElementById('shineAngle').value);
                 const currentContrast = parseFloat(document.getElementById('maskContrast').value);
                 
-                // Remove old mask and shine effect completely
-                if (this.shineEffect) {
-                    this.shineEffect.removeMask();
-                    this.shineEffect.setOpacity(0);
-                    // Force clear all custom properties
-                    this.shineGradient.style.removeProperty('--shine-gradient');
-                    this.shineGradient.style.removeProperty('--shine-position');
-                    this.shineGradient.style.removeProperty('--blur-amount');
-                    this.shineContainer.style.removeProperty('--shine-opacity');
-                    this.shineContainer.style.removeProperty('--lightness-mask');
+                // Remove old mask and shine effects completely
+                if (this.shineEffectFront) {
+                    this.shineEffectFront.removeMask();
+                    this.shineEffectFront.setOpacity(0);
+                    this.shineGradientFront.style.removeProperty('--shine-gradient');
+                    this.shineGradientFront.style.removeProperty('--shine-position');
+                    this.shineGradientFront.style.removeProperty('--blur-amount');
+                    this.shineContainerFront.style.removeProperty('--shine-opacity');
+                    this.shineContainerFront.style.removeProperty('--lightness-mask');
+                }
+                if (this.shineEffectBack) {
+                    this.shineEffectBack.removeMask();
+                    this.shineEffectBack.setOpacity(0);
+                    this.shineGradientBack.style.removeProperty('--shine-gradient');
+                    this.shineGradientBack.style.removeProperty('--shine-position');
+                    this.shineGradientBack.style.removeProperty('--blur-amount');
+                    this.shineContainerBack.style.removeProperty('--shine-opacity');
+                    this.shineContainerBack.style.removeProperty('--lightness-mask');
                 }
                 
                 // Small delay to ensure cleanup
                 await new Promise(resolve => setTimeout(resolve, 50));
                 
-                // Create new shine effect with fresh image path
-                this.shineEffect = new ShineEffect(this.shineContainer, this.shineGradient, imagePath);
+                // Create new shine effects for both front and back
+                this.shineEffectFront = new ShineEffect(this.shineContainerFront, this.shineGradientFront, imagePath);
+                this.shineEffectBack = new ShineEffect(this.shineContainerBack, this.shineGradientBack, imagePath);
                 
                 try {
-                    // Apply current settings
-                    this.shineEffect.maskContrast = currentContrast;
-                    this.shineEffect.updateGradientAngle(currentAngle);
-                    this.shineEffect.setBlur(currentBlur);
+                    // Apply current settings to both
+                    this.shineEffectFront.maskContrast = currentContrast;
+                    this.shineEffectFront.updateGradientAngle(currentAngle);
+                    this.shineEffectFront.setBlur(currentBlur);
                     
-                    // Generate and apply new mask
-                    console.log('Generating mask for:', imageName);
-                    await this.shineEffect.generateLightnessMask();
-                    console.log('Mask generated successfully for:', imageName);
-                    this.shineEffect.applyMask();
+                    this.shineEffectBack.maskContrast = currentContrast;
+                    this.shineEffectBack.updateGradientAngle(currentAngle);
+                    this.shineEffectBack.setBlur(currentBlur);
+                    
+                    // Generate and apply masks for both
+                    console.log('Generating masks for:', imageName);
+                    await Promise.all([
+                        this.shineEffectFront.generateLightnessMask(),
+                        this.shineEffectBack.generateLightnessMask()
+                    ]);
+                    console.log('Masks generated successfully for:', imageName);
+                    this.shineEffectFront.applyMask();
+                    this.shineEffectBack.applyMask();
                 } catch (e) {
-                    console.error('Failed to create shine effect for', imageName, ':', e);
+                    console.error('Failed to create shine effects for', imageName, ':', e);
                 }
                 
                 // setRotation will handle the initial opacity based on angle
@@ -918,9 +1170,10 @@
             
             setRotation(angle) {
                 this.rotation = angle;
-                this.element.style.transform = `rotateY(${angle}deg)`;
                 
                 const normalizedAngle = ((angle % 360) + 360) % 360;
+                
+                // Apply flip logic consistently - mesh flip and gradient use the same angle
                 const needsFlip = normalizedAngle > 90 && normalizedAngle < 270;
                 
                 if (needsFlip) {
@@ -931,18 +1184,46 @@
                 
                 this.updateGradient(angle, needsFlip);
                 
-                if (this.shineEffect) {
-                    this.shineEffect.updateShinePosition(normalizedAngle);
+                // Update front shine effect
+                if (this.shineEffectFront) {
+                    this.shineEffectFront.updateShinePosition(angle, this.isFlipping);
                     
-                    let opacity = 0;
-                    if (normalizedAngle <= 90) {
-                        opacity = this.maxShineOpacity;
-                    } else if (normalizedAngle >= 270) {
-                        opacity = this.maxShineOpacity;
+                    let frontOpacity = 0;
+                    // Convert to -180 to 180 range for opacity check
+                    const angleForOpacity = ((angle + 180) % 360) - 180;
+                    if (angleForOpacity >= -90 && angleForOpacity <= 90) {
+                        frontOpacity = this.maxShineOpacity;
                     }
-                    console.log('Setting shine opacity to:', opacity, 'at angle:', normalizedAngle);
-                    this.shineEffect.setOpacity(opacity);
+                    this.shineEffectFront.setOpacity(frontOpacity);
                 }
+                
+                // Update back shine effect (opposite visibility)
+                if (this.shineEffectBack) {
+                    // For back face, invert the angle since it's rotated 180 degrees
+                    const backAngle = angle + 180;
+                    this.shineEffectBack.updateShinePosition(backAngle, this.isFlipping);
+                    
+                    let backOpacity = 0;
+                    // Convert to -180 to 180 range for opacity check
+                    const angleForOpacity = ((angle + 180) % 360) - 180;
+                    if (angleForOpacity < -90 || angleForOpacity > 90) {
+                        backOpacity = this.maxShineOpacity;
+                    }
+                    this.shineEffectBack.setOpacity(backOpacity);
+                }
+                
+                // Check if we're currently hovering (has hover-rotate class)
+                // During flip animation, always update transform (hover is disabled)
+                const isHovering = !this.isFlipping && this.element.classList.contains('hover-rotate');
+                
+                if (isHovering) {
+                    // If hovering (and not flipping), the hover handler will update the transform
+                    // We don't update it here to preserve hover rotation
+                    return;
+                }
+                
+                // Otherwise, update the transform normally
+                this.element.style.transform = `rotateY(${angle}deg)`;
             }
             
             updateGradient(rotationAngle, needsFlip) {
@@ -971,6 +1252,9 @@
             
             animate() {
                 if (!this.animating) return;
+                
+                // Stop animation if page is being hovered
+                if (this.isPageHovered) return;
                 
                 this.rotation += this.animationSpeed;
                 this.setRotation(this.rotation);
@@ -1002,7 +1286,17 @@
                 if (this.isFlipping) return;
                 
                 this.isFlipping = true;
+                this.hoverRotationDisabled = true; // Disable hover rotation during flip
                 this.element.classList.add('flipping');
+                
+                // Immediately reset hover rotation values
+                this.hoverRotationX = 0;
+                this.hoverRotationY = 0;
+                
+                // Reset transform to base rotation (no hover rotation)
+                const currentRotation = this.rotation;
+                this.element.style.transform = `rotateY(${currentRotation}deg)`;
+                this.element.classList.remove('hover-rotate');
                 
                 const targetRotation = this.rotation + 180;
                 const startRotation = this.rotation;
@@ -1013,21 +1307,34 @@
                     const elapsed = currentTime - startTime;
                     const progress = Math.min(elapsed / duration, 1);
                     
+                    // Use the same easing function for everything
                     const eased = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
                     
-                    const currentRotation = startRotation + (180 * eased);
-                    this.setRotation(currentRotation);
+                    // Calculate eased rotation - this is the single source of truth
+                    const easedRotation = startRotation + (180 * eased);
                     
-                    const displayRotation = ((currentRotation + 180) % 360) - 180;
+                    // Use setRotation with the eased angle - it will handle mesh flip, gradient, and shine
+                    // Everything follows the same eased rotation value
+                    this.setRotation(easedRotation);
+                    
+                    // Update UI
+                    const displayRotation = ((easedRotation + 180) % 360) - 180;
                     document.getElementById('rotation').value = displayRotation;
-                    document.getElementById('rotationValue').textContent = Math.round(currentRotation);
+                    document.getElementById('rotationValue').textContent = Math.round(easedRotation);
                     
                     if (progress < 1) {
                         requestAnimationFrame(animateFlip);
                     } else {
+                        // Animation complete - set final rotation
                         this.rotation = targetRotation;
+                        this.setRotation(targetRotation);
                         this.element.classList.remove('flipping');
                         this.isFlipping = false;
+                        
+                        // Re-enable hover rotation after a short delay
+                        setTimeout(() => {
+                            this.hoverRotationDisabled = false;
+                        }, 300);
                     }
                 };
                 
@@ -1083,6 +1390,9 @@
                 
                 // Load first medal
                 await this.loadMedal(0);
+                
+                // Start animation automatically
+                this.medal.startAnimation();
             }
             
             createThumbnails() {
@@ -1159,6 +1469,121 @@
         window.addEventListener('load', async () => {
             library = new MedalLibrary();
             
+            // Dark mode toggle
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                darkModeToggle.textContent = '☀️ Light Mode';
+            }
+            
+            darkModeToggle.addEventListener('click', () => {
+                const isDark = document.body.classList.toggle('dark-mode');
+                darkModeToggle.textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+                localStorage.setItem('darkMode', isDark);
+            });
+            
+            // Page hover detection - stop animation when hovering
+            let hoverTimeout = null;
+            
+            document.addEventListener('mousemove', () => {
+                // Mouse is moving on the page - pause animation
+                library.medal.isPageHovered = true;
+                
+                // Clear any existing timeout
+                if (hoverTimeout) {
+                    clearTimeout(hoverTimeout);
+                }
+                
+                // Set timeout to resume animation after mouse stops moving
+                hoverTimeout = setTimeout(() => {
+                    library.medal.isPageHovered = false;
+                    // Resume animation if it was animating
+                    if (library.medal.animating) {
+                        library.medal.animate();
+                    }
+                }, 100); // Resume after 100ms of no mouse movement
+            });
+            
+            document.addEventListener('mouseleave', () => {
+                // Mouse left the page - resume animation immediately
+                library.medal.isPageHovered = false;
+                if (hoverTimeout) {
+                    clearTimeout(hoverTimeout);
+                    hoverTimeout = null;
+                }
+                // Resume animation if it was animating
+                if (library.medal.animating) {
+                    library.medal.animate();
+                }
+            });
+            
+            // Medal hover rotation effect
+            const medalDisplay = document.querySelector('.medal-display');
+            const medalElement = document.getElementById('medal');
+            const scene = document.querySelector('.scene');
+            let hoverRotationX = 0;
+            let hoverRotationY = 0;
+            const maxRotation = 15; // Maximum rotation in degrees
+            
+            // Store hover rotation values in medal object so flip() can reset them
+            library.medal.hoverRotationX = 0;
+            library.medal.hoverRotationY = 0;
+            
+            medalDisplay.addEventListener('mousemove', (e) => {
+                // Don't apply hover rotation if medal is flipping or hover rotation is disabled
+                if (library.medal.isFlipping || library.medal.hoverRotationDisabled) {
+                    return;
+                }
+                
+                const rect = scene.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                // Calculate mouse position relative to center (-1 to 1)
+                const mouseX = (e.clientX - centerX) / (rect.width / 2);
+                const mouseY = (e.clientY - centerY) / (rect.height / 2);
+                
+                // Calculate rotation angles (inverted Y for natural feel)
+                // Smoothly interpolate to target rotation for easing
+                const targetRotationY = mouseX * maxRotation;
+                const targetRotationX = -mouseY * maxRotation;
+                
+                // Update stored values in medal object
+                hoverRotationX = library.medal.hoverRotationX || 0;
+                hoverRotationY = library.medal.hoverRotationY || 0;
+                
+                // Ease towards target rotation
+                hoverRotationY += (targetRotationY - hoverRotationY) * 0.2;
+                hoverRotationX += (targetRotationX - hoverRotationX) * 0.2;
+                
+                // Store updated values
+                library.medal.hoverRotationX = hoverRotationX;
+                library.medal.hoverRotationY = hoverRotationY;
+                
+                // Apply hover rotation class for smooth transition
+                medalElement.classList.add('hover-rotate');
+                
+                // Get current rotation from the medal
+                const currentRotation = library.medal.rotation;
+                
+                // Combine current rotation with hover rotation
+                medalElement.style.transform = `rotateY(${currentRotation + hoverRotationY}deg) rotateX(${hoverRotationX}deg)`;
+            });
+            
+            medalDisplay.addEventListener('mouseleave', () => {
+                hoverRotationX = 0;
+                hoverRotationY = 0;
+                library.medal.hoverRotationX = 0;
+                library.medal.hoverRotationY = 0;
+                medalElement.classList.remove('hover-rotate');
+                
+                // Reset to just the current rotation
+                const currentRotation = library.medal.rotation;
+                medalElement.style.transform = `rotateY(${currentRotation}deg)`;
+            });
+            
             // Controls
             document.getElementById('rotation').addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value);
@@ -1195,24 +1620,33 @@
             document.getElementById('shineAngle').addEventListener('input', (e) => {
                 const value = parseInt(e.target.value);
                 document.getElementById('shineAngleValue').textContent = value;
-                if (library.medal.shineEffect) {
-                    library.medal.shineEffect.updateGradientAngle(value);
+                if (library.medal.shineEffectFront) {
+                    library.medal.shineEffectFront.updateGradientAngle(value);
+                }
+                if (library.medal.shineEffectBack) {
+                    library.medal.shineEffectBack.updateGradientAngle(value);
                 }
             });
             
             document.getElementById('shineBlur').addEventListener('input', (e) => {
                 const value = parseInt(e.target.value);
                 document.getElementById('shineBlurValue').textContent = value;
-                if (library.medal.shineEffect) {
-                    library.medal.shineEffect.setBlur(value);
+                if (library.medal.shineEffectFront) {
+                    library.medal.shineEffectFront.setBlur(value);
+                }
+                if (library.medal.shineEffectBack) {
+                    library.medal.shineEffectBack.setBlur(value);
                 }
             });
             
             document.getElementById('maskContrast').addEventListener('input', (e) => {
                 const value = parseFloat(e.target.value);
                 document.getElementById('maskContrastValue').textContent = value.toFixed(1);
-                if (library.medal.shineEffect) {
-                    library.medal.shineEffect.maskContrast = value;
+                if (library.medal.shineEffectFront) {
+                    library.medal.shineEffectFront.maskContrast = value;
+                }
+                if (library.medal.shineEffectBack) {
+                    library.medal.shineEffectBack.maskContrast = value;
                 }
             });
             
@@ -1224,15 +1658,19 @@
             });
             
             document.getElementById('regenerateMask').addEventListener('click', async () => {
-                if (!library.medal.shineEffect) return;
+                if (!library.medal.shineEffectFront || !library.medal.shineEffectBack) return;
                 
                 const btn = document.getElementById('regenerateMask');
                 btn.disabled = true;
                 btn.textContent = '⏳ Regenerating...';
                 
                 try {
-                    await library.medal.shineEffect.generateLightnessMask();
-                    library.medal.shineEffect.applyMask();
+                    await Promise.all([
+                        library.medal.shineEffectFront.generateLightnessMask(),
+                        library.medal.shineEffectBack.generateLightnessMask()
+                    ]);
+                    library.medal.shineEffectFront.applyMask();
+                    library.medal.shineEffectBack.applyMask();
                     
                     btn.textContent = '✓ Mask Regenerated!';
                     setTimeout(() => {
