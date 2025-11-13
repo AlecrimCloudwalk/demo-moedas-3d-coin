@@ -34,9 +34,18 @@
 </head>
 <body>
   <script>
+    // Unregister any existing service workers (common GitHub Pages issue)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+        }
+      });
+    }
+    
     window.addEventListener('error', function(e) {
-      console.error('Flutter app error:', e.error);
-      document.body.innerHTML = '<div style="padding: 20px; font-family: sans-serif;"><h1>Error Loading App</h1><p>' + e.error + '</p><p>Check console for details.</p></div>';
+      console.error('Flutter app error:', e.error, e.filename, e.lineno);
+      document.body.innerHTML = '<div style="padding: 20px; font-family: sans-serif;"><h1>Error Loading App</h1><p>' + (e.error ? e.error.toString() : 'Unknown error') + '</p><p>File: ' + (e.filename || 'unknown') + '</p><p>Check console for details.</p></div>';
     });
     
     window.addEventListener('unhandledrejection', function(e) {
