@@ -39,11 +39,14 @@ class Medal3D extends StatefulWidget {
 
 class _Medal3DState extends State<Medal3D> {
   ui.Image? _shineMask;
+  List<({double px, double py, double npx, double npy})>? _cachedEdgeCoords; // Pre-computed coordinates
+  List<double>? _cachedSegmentAngles; // Pre-computed segment angles
   
   @override
   void initState() {
     super.initState();
     _generateShineMask();
+    _precomputeEdgeCoords();
   }
 
   @override
@@ -51,6 +54,37 @@ class _Medal3DState extends State<Medal3D> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.frontImage != widget.frontImage) {
       _generateShineMask();
+    }
+    if (oldWidget.edgePoints != widget.edgePoints) {
+      _precomputeEdgeCoords();
+    }
+  }
+
+  void _precomputeEdgeCoords() {
+    if (widget.edgePoints.isEmpty) return;
+    
+    final centerX = widget.frontImage.width / 2;
+    final centerY = widget.frontImage.height / 2;
+    
+    _cachedEdgeCoords = [];
+    _cachedSegmentAngles = [];
+    
+    for (int i = 0; i < widget.edgePoints.length; i++) {
+      final point = widget.edgePoints[i];
+      final nextPoint = widget.edgePoints[(i + 1) % widget.edgePoints.length];
+      
+      // Convert to centered coordinates (base coords, no rotation transforms)
+      final px = (point.x - centerX);
+      final py = (point.y - centerY);
+      final npx = (nextPoint.x - centerX);
+      final npy = (nextPoint.y - centerY);
+      
+      // Cache coordinates directly (much faster than Path extraction)
+      _cachedEdgeCoords!.add((px: px, py: py, npx: npx, npy: npy));
+      
+      // Pre-compute segment angle
+      final segmentAngle = (i / widget.edgePoints.length) * pi * 2;
+      _cachedSegmentAngles!.add(segmentAngle);
     }
   }
 
@@ -124,6 +158,8 @@ class _Medal3DState extends State<Medal3D> {
             shineMask: _shineMask,
             shineOpacity: widget.shineOpacity,
             shineAngle: widget.shineAngle,
+            cachedEdgeCoords: _cachedEdgeCoords,
+            cachedSegmentAngles: _cachedSegmentAngles,
           ),
         ),
       ),
@@ -143,6 +179,8 @@ class Medal3DPainter extends CustomPainter {
   final ui.Image? shineMask;
   final double shineOpacity;
   final double shineAngle;
+  final List<({double px, double py, double npx, double npy})>? cachedEdgeCoords; // Pre-computed coordinates
+  final List<double>? cachedSegmentAngles; // Pre-computed angles
 
   Medal3DPainter({
     required this.frontImage,
@@ -155,6 +193,8 @@ class Medal3DPainter extends CustomPainter {
     this.shineMask,
     this.shineOpacity = 0.8,
     this.shineAngle = 135,
+    this.cachedEdgeCoords,
+    this.cachedSegmentAngles,
   });
 
   @override
@@ -231,6 +271,7 @@ class Medal3DPainter extends CustomPainter {
           frontOffset,
           scaleFactor,
           size,
+          image: frontImage, // Use front image for clipping
         );
       }
     } else {
@@ -258,6 +299,18 @@ class Medal3DPainter extends CustomPainter {
         translateX: backOffset,
         scaleFactor: scaleFactor,
       );
+      
+      // 3. Shine effect on back face
+      if (shineMask != null && shineOpacity > 0) {
+        _drawShine(
+          canvas,
+          scaleX,
+          backOffset,
+          scaleFactor,
+          size,
+          image: backImage, // Use back image for clipping
+        );
+      }
     }
 
     canvas.restore();
@@ -301,61 +354,63 @@ class Medal3DPainter extends CustomPainter {
   ) {
     if (thickness < 0.5) return;
 
-    // Convert edge points to canvas coordinates
-    final centerX = frontImage.width / 2;
-    final centerY = frontImage.height / 2;
+    // Use cached coordinates if available, otherwise fall back to computing on-the-fly
+    final useCache = cachedEdgeCoords != null && 
+                     cachedSegmentAngles != null &&
+                     cachedEdgeCoords!.length == edgePoints.length;
 
     // Calculate light offset based on rotation (moving gradient effect)
     final lightOffset = (rotation / 360) * pi * 2;
 
     for (int i = 0; i < edgePoints.length; i++) {
-      final point = edgePoints[i];
-      final nextPoint = edgePoints[(i + 1) % edgePoints.length];
-
-      // Convert to centered coordinates
-      final px = (point.x - centerX);
-      final py = (point.y - centerY);
-      final npx = (nextPoint.x - centerX);
-      final npy = (nextPoint.y - centerY);
+      double px, py, npx, npy;
+      
+      if (useCache) {
+        // Use cached coordinates directly (much faster!)
+        final coords = cachedEdgeCoords![i];
+        px = coords.px;
+        py = coords.py;
+        npx = coords.npx;
+        npy = coords.npy;
+      } else {
+        // Fallback: compute on-the-fly
+        final centerX = frontImage.width / 2;
+        final centerY = frontImage.height / 2;
+        final point = edgePoints[i];
+        final nextPoint = edgePoints[(i + 1) % edgePoints.length];
+        px = (point.x - centerX);
+        py = (point.y - centerY);
+        npx = (nextPoint.x - centerX);
+        npy = (nextPoint.y - centerY);
+      }
       
       // BACKFACE CULLING: Only draw segments facing the camera
-      // We rotate around Y-axis, so visibility depends on X-position
-      // Calculate the average X position of this segment (relative to center)
       final segmentX = (px + npx) / 2;
       
-      // Determine visibility based on rotation and X-position
-      // Use normalized rotation to avoid discontinuities during animation
       double normalizedRot = ((rotation % 360) + 360) % 360;
       if (normalizedRot > 180) {
         normalizedRot -= 360;
       }
       
-      // Only cull if significantly rotated (avoid culling at face-on positions)
       if (normalizedRot.abs() > 10) {
-        // rotation > 0: rotating right, show LEFT-side segments (x < 0)
-        // rotation < 0: rotating left, show RIGHT-side segments (x > 0)
         final onVisibleSide = (normalizedRot > 0 && segmentX < 0) || 
                               (normalizedRot < 0 && segmentX > 0);
-        
         if (!onVisibleSide) {
-          continue; // This segment is on the far side, don't draw it
+          continue;
         }
       }
 
-      // Now scale for drawing
+      // Scale and transform for drawing
       final pxScaled = px * scaleFactor;
       final pyScaled = py * scaleFactor;
       final npxScaled = npx * scaleFactor;
       final npyScaled = npy * scaleFactor;
 
-      // Four corners of the quad (connecting front face to back face)
-      // Front edge (at frontOffset position)
+      // Four corners of the quad
       final x1 = pxScaled * scaleX + frontOffset;
       final y1 = pyScaled;
       final x2 = npxScaled * scaleX + frontOffset;
       final y2 = npyScaled;
-
-      // Back edge (at backOffset position)
       final x3 = npxScaled * scaleX + backOffset;
       final y3 = npyScaled;
       final x4 = pxScaled * scaleX + backOffset;
@@ -368,8 +423,10 @@ class Medal3DPainter extends CustomPainter {
         ..lineTo(x4, y4)
         ..close();
 
-      // Calculate segment angle for lighting
-      final segmentAngle = (i / edgePoints.length) * pi * 2;
+      // Use cached segment angle if available
+      final segmentAngle = useCache 
+          ? cachedSegmentAngles![i]
+          : (i / edgePoints.length) * pi * 2;
       final lightAngle = segmentAngle + lightOffset;
 
       // Moving gradient effect (like CSS version)
@@ -378,31 +435,21 @@ class Medal3DPainter extends CustomPainter {
       final highlight = pow(max(0.0, sin(lightAngle)), 32).toDouble() * 0.5;
 
       final reflectionValue = mainReflection + detailReflection + highlight;
-      
-      // Apply darkness control
       final baseLightness = 25 + (reflectionValue * 75);
       final adjustedLightness = baseLightness * (1 - edgeDarkness * 0.5);
-
-      // Convert HSL to RGB (H=0 for grayscale, S=0, L=adjustedLightness)
       final brightness = (adjustedLightness / 100 * 255).floor();
       
       final paint = Paint()
-        ..color = Color.fromARGB(
-          255, // Fully opaque!
-          brightness.clamp(0, 255),
-          brightness.clamp(0, 255),
-          brightness.clamp(0, 255),
-        )
+        ..color = Color.fromARGB(255, brightness.clamp(0, 255), brightness.clamp(0, 255), brightness.clamp(0, 255))
         ..style = PaintingStyle.fill
         ..isAntiAlias = true
         ..filterQuality = FilterQuality.high
-        ..blendMode = BlendMode.srcOver; // Ensure proper opaque blending
+        ..blendMode = BlendMode.srcOver;
 
       canvas.drawPath(path, paint);
 
-      // Subtle outline for definition
       final strokePaint = Paint()
-        ..color = const Color.fromARGB(51, 0, 0, 0) // 20% opacity
+        ..color = const Color.fromARGB(51, 0, 0, 0)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.5
         ..isAntiAlias = true;
@@ -414,15 +461,16 @@ class Medal3DPainter extends CustomPainter {
   void _drawShine(
     Canvas canvas,
     double scaleX,
-    double frontOffset,
+    double faceOffset,
     double scaleFactor,
-    Size size,
-  ) {
+    Size size, {
+    required ui.Image image, // Image to use for clipping (front or back)
+  }) {
     canvas.save();
     
     // Apply rotation scaling and offset
     canvas.scale(scaleX, 1.0);
-    canvas.translate(frontOffset, 0);
+    canvas.translate(faceOffset, 0);
 
     // Normalize rotation to -180 to 180
     double normalizedAngle = ((rotation + 180) % 360) - 180;
@@ -445,8 +493,8 @@ class Medal3DPainter extends CustomPainter {
     }
 
     // Calculate image dimensions
-    final imageWidth = frontImage.width.toDouble();
-    final imageHeight = frontImage.height.toDouble();
+    final imageWidth = image.width.toDouble();
+    final imageHeight = image.height.toDouble();
     final imageSize = max(imageWidth, imageHeight);
     final scale = size.width / imageSize;
 
@@ -490,17 +538,21 @@ class Medal3DPainter extends CustomPainter {
     // We DON'T draw the medal here - it's already drawn in paint() method
     canvas.saveLayer(Rect.fromLTWH(drawX, drawY, drawWidth, drawHeight), Paint());
     
-    // Step 1: Draw the shine gradient with blur
+    // Step 1: Draw the shine gradient with adaptive blur
+    // Reduce blur when opacity is low for better performance
+    final blurSigma = shineOpacity > 0.5 ? 15.0 : (shineOpacity * 30).clamp(5.0, 15.0);
+    final paint = Paint()..shader = gradient;
+    if (blurSigma > 5.0) {
+      paint.imageFilter = ui.ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma);
+    }
     canvas.drawRect(
       Rect.fromLTWH(drawX, drawY, drawWidth, drawHeight),
-      Paint()
-        ..shader = gradient
-        ..imageFilter = ui.ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+      paint,
     );
     
     // Step 2: Clip to medal's alpha using dstIn - this removes shine outside medal bounds
     canvas.drawImageRect(
-      frontImage,
+      image, // Use the provided image (front or back) for clipping
       Rect.fromLTWH(0, 0, imageWidth, imageHeight),
       Rect.fromLTWH(drawX, drawY, drawWidth, drawHeight),
       Paint()..blendMode = BlendMode.dstIn, // Clip shine to medal's alpha

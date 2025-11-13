@@ -8,7 +8,8 @@ import '../models/edge_point.dart';
 /// Service for processing medal images
 class ImageProcessor {
   /// Extract edge points from an image by scanning in polar coordinates
-  static List<EdgePoint> extractEdgePoints(img.Image image, {int angleSteps = 120}) {
+  /// Reduced default from 120 to 80 for better performance (~33% fewer points)
+  static List<EdgePoint> extractEdgePoints(img.Image image, {int angleSteps = 80}) {
     final centerX = image.width / 2;
     final centerY = image.height / 2;
     final maxRadius = max(image.width, image.height) / 2;

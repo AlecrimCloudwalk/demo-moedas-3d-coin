@@ -44,7 +44,7 @@ class _MedalDemoScreenState extends State<MedalDemoScreen>
   bool _isDarkMode = false;
 
   // Animation
-  AnimationController? _animationController;
+  AnimationController? _animationController; // For flip animation
   bool _isAnimating = false;
   double _currentVelocity = 0.0; // Current rotation velocity for easing
   DateTime? _lastFrameTime;
@@ -104,6 +104,7 @@ class _MedalDemoScreenState extends State<MedalDemoScreen>
     if (_isAnimating) return;
     setState(() {
       _isAnimating = true;
+      _currentVelocity = 0.0; // Reset for smooth ease-in
       _lastFrameTime = DateTime.now();
     });
 
@@ -130,7 +131,12 @@ class _MedalDemoScreenState extends State<MedalDemoScreen>
         if (_rotation < -180) _rotation = 180;
       });
       
-      Future.delayed(const Duration(milliseconds: 16), animate);
+      // Use SchedulerBinding for frame-synced updates (better than Future.delayed)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_isAnimating) {
+          animate();
+        }
+      });
     }
 
     animate();
@@ -342,16 +348,18 @@ class _MedalDemoScreenState extends State<MedalDemoScreen>
                           : (_frontImage != null &&
                                   _backImage != null &&
                                   _edgePoints != null)
-                              ? Medal3D(
-                                  frontImage: _frontImage!,
-                                  backImage: _backImage!,
-                                  edgePoints: _edgePoints!,
-                                  rotation: _rotation,
-                                  thickness: _thickness,
-                                  edgeDarkness: _edgeDarkness,
-                                  showEdge: _showEdge,
-                                  onTap: _flip,
-                                  size: 300,
+                              ? RepaintBoundary(
+                                  child: Medal3D(
+                                    frontImage: _frontImage!,
+                                    backImage: _backImage!,
+                                    edgePoints: _edgePoints!,
+                                    rotation: _rotation,
+                                    thickness: _thickness,
+                                    edgeDarkness: _edgeDarkness,
+                                    showEdge: _showEdge,
+                                    onTap: _flip,
+                                    size: 300,
+                                  ),
                                 )
                               : const Text('Failed to load medal'),
                         ),
