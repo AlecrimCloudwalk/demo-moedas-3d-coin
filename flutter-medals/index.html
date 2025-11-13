@@ -33,6 +33,16 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('Flutter app error:', e.error);
+      document.body.innerHTML = '<div style="padding: 20px; font-family: sans-serif;"><h1>Error Loading App</h1><p>' + e.error + '</p><p>Check console for details.</p></div>';
+    });
+    
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('Unhandled promise rejection:', e.reason);
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
