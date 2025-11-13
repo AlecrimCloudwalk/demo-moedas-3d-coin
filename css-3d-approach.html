@@ -922,6 +922,7 @@
                 this.hoverRotationDisabled = false; // Track if hover rotation is temporarily disabled
                 this.shineEffectFront = null;
                 this.shineEffectBack = null;
+                this.hasFlippedDuringAnimation = false; // Track if we've already flipped during current animation
                 
                 // Create shine elements for front face
                 this.shineContainerFront = document.createElement('div');
@@ -1145,6 +1146,11 @@
                     
                     segment.style.transformOrigin = '50% 50%';
                     
+                    // Store original position data for flipping
+                    segment.setAttribute('data-mid-x', midX);
+                    segment.setAttribute('data-mid-y', midY);
+                    segment.setAttribute('data-tangent-angle', tangentAngle);
+                    
                     const baseTransform = `translate(-50%, -50%) translate(${midX}px, ${midY}px) rotateZ(${tangentAngle}deg) rotateX(90deg) translateZ(0px)`;
                     
                     segment.setAttribute('data-base-transform', baseTransform);
@@ -1169,18 +1175,48 @@
             }
             
             setRotation(angle) {
+                // Single source of truth: only medal-3d rotates
+                // Everything else is positioned relative to it
                 this.rotation = angle;
+                
+                // Apply rotation to the main medal element
+                // This is the ONLY place where rotation happens
+                const isHovering = !this.isFlipping && this.element.classList.contains('hover-rotate');
+                if (!isHovering) {
+                    this.element.style.transform = `rotateY(${angle}deg)`;
+                }
                 
                 const normalizedAngle = ((angle % 360) + 360) % 360;
                 
-                // Apply flip logic consistently - mesh flip and gradient use the same angle
-                const needsFlip = normalizedAngle > 90 && normalizedAngle < 270;
+                // Apply flip logic with slight offset to minimize visible gap
+                // Flip at 91° (just after edge-on) instead of exactly at 90°
+                const needsFlip = normalizedAngle > 91 && normalizedAngle < 269;
                 
-                if (needsFlip) {
-                    this.edgeContainer.style.transform = 'rotateY(180deg)';
+                // During animation, only allow the flip to change ONCE when crossing the threshold
+                if (this.isFlipping) {
+                    // Check if we should flip based on current angle
+                    if (needsFlip && !this.hasFlippedDuringAnimation) {
+                        // We've crossed into the flip zone for the first time this animation
+                        this.edgeContainer.style.transform = 'rotateY(180deg)';
+                        this.hasFlippedDuringAnimation = true;
+                    } else if (!needsFlip && this.hasFlippedDuringAnimation) {
+                        // We've crossed back out of the flip zone
+                        this.edgeContainer.style.transform = '';
+                    }
+                    // Otherwise, keep current state (don't change)
                 } else {
-                    this.edgeContainer.style.transform = '';
+                    // Not animating - update normally
+                    if (needsFlip) {
+                        this.edgeContainer.style.transform = 'rotateY(180deg)';
+                    } else {
+                        this.edgeContainer.style.transform = '';
+                    }
                 }
+                
+                // Reset all segments to their base transform (no individual rotation)
+                this.edgeSegments.forEach((segment) => {
+                    segment.style.transform = segment.getAttribute('data-base-transform');
+                });
                 
                 this.updateGradient(angle, needsFlip);
                 
@@ -1211,19 +1247,6 @@
                     }
                     this.shineEffectBack.setOpacity(backOpacity);
                 }
-                
-                // Check if we're currently hovering (has hover-rotate class)
-                // During flip animation, always update transform (hover is disabled)
-                const isHovering = !this.isFlipping && this.element.classList.contains('hover-rotate');
-                
-                if (isHovering) {
-                    // If hovering (and not flipping), the hover handler will update the transform
-                    // We don't update it here to preserve hover rotation
-                    return;
-                }
-                
-                // Otherwise, update the transform normally
-                this.element.style.transform = `rotateY(${angle}deg)`;
             }
             
             updateGradient(rotationAngle, needsFlip) {
@@ -1303,6 +1326,9 @@
                 const startTime = performance.now();
                 const duration = 1200;
                 
+                // Reset the flip tracking flag at the start of animation
+                this.hasFlippedDuringAnimation = false;
+                
                 const animateFlip = (currentTime) => {
                     const elapsed = currentTime - startTime;
                     const progress = Math.min(elapsed / duration, 1);
@@ -1312,6 +1338,10 @@
                     
                     // Calculate eased rotation - this is the single source of truth
                     const easedRotation = startRotation + (180 * eased);
+                    
+                    // Don't use flipProgress during animation - let setRotation handle it
+                    // based on the current angle like it does during normal rotation.
+                    // This prevents the edge container from rotating faster than the medal.
                     
                     // Use setRotation with the eased angle - it will handle mesh flip, gradient, and shine
                     // Everything follows the same eased rotation value
@@ -1484,11 +1514,12 @@
                 localStorage.setItem('darkMode', isDark);
             });
             
-            // Page hover detection - stop animation when hovering
+            // Medal hover detection - stop animation when hovering over medal component
+            const medalDisplay = document.querySelector('.medal-display');
             let hoverTimeout = null;
             
-            document.addEventListener('mousemove', () => {
-                // Mouse is moving on the page - pause animation
+            medalDisplay.addEventListener('mousemove', () => {
+                // Mouse is moving over the medal - pause animation
                 library.medal.isPageHovered = true;
                 
                 // Clear any existing timeout
@@ -1506,8 +1537,8 @@
                 }, 100); // Resume after 100ms of no mouse movement
             });
             
-            document.addEventListener('mouseleave', () => {
-                // Mouse left the page - resume animation immediately
+            medalDisplay.addEventListener('mouseleave', () => {
+                // Mouse left the medal component - resume animation immediately
                 library.medal.isPageHovered = false;
                 if (hoverTimeout) {
                     clearTimeout(hoverTimeout);
@@ -1520,7 +1551,6 @@
             });
             
             // Medal hover rotation effect
-            const medalDisplay = document.querySelector('.medal-display');
             const medalElement = document.getElementById('medal');
             const scene = document.querySelector('.scene');
             let hoverRotationX = 0;
